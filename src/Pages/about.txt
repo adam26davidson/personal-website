@@ -1,0 +1,5 @@
+Welcome to my website! If you haven't already, try clicking somewhere and dragging around... you should see some interesting effects on the text!
+
+I am a software engineer with a passion for design and math. Check out the links below to read about how this website was made, or see an overview of my professional experience. See the Projects page for a list of my personal projects and experiments. 
+
+I am continually working on this site so check back soon to see what's new!

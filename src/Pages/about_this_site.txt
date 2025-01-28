@@ -1,0 +1,5 @@
+This site is based on all characters. The html is very simple, just one div with a whole bunch of text in it.
+
+When you click or touch somewhere and drag around, there is a spring lattice simulation running in the background that is attracted upwards under your mouse. The amount that the masses in the lattice are displaced from their resting position at a certain point determines the character that is displayed there. 
+
+The further the lattice is from zero, the less similar the displayed character is from the original character. A machine learning desciptor called "Shape Contexts" was used to precompute the similarity between characters. The use of Shape Contexts to compute character similarity was inspired by the website shapecatcher.com, created by Benjamin Milde. 

@@ -1,0 +1,19 @@
+Software Developer and Consultant
+IBM - Neudesic
+January 2022 - September 2024
+
+-> Worked with a client in the utilities industry on enhancing their payroll system using C# Azure Functions, Java Micronout Microservices deployed in Kubernetes, MS SQL Server Database. Work included speeding up critical weekly payroll processes, building new integrations to external systems, and automating manual processes and reports. Gained in depth experience working with and enhancing Azure DevOps YAML CI CD Pipelines, Terraform IAC code for Azure resources, and working with Git and Azure Repos.
+
+-> Worked on on an internal IBM - Neudesic project leveraging LLMs deployed in azure to perform various tasks using chain of thought and guided step by step templates to automate tasks. Work on this project included UI work in React.js and Material UI Library, and work implementing OAuth2 security between front end and back end. 
+
+-> Worked with a client in the legal consulting industry on their in house project management software using Java Spring Boot, Maven and CosmosDB. Work included writing a configurable polymorphic persistence layer for a microservice with the ability to switch between two different database technologies based on configuration. Worked with Kafka message broker, and a variety of Azure Spring Cloud technologies.
+
+Full Stack Web Developer
+Nioxus 
+July 2020 - October 2021
+
+-> Developed and deployed two full-stack web applications using React.js, Node.js, and MySQL.
+
+-> Migrated company server applications to AWS infrastructure.
+
+-> Authored weekly tech articles and created instructional content for Ninox Database products.
