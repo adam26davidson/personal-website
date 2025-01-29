@@ -690,6 +690,8 @@ export abstract class Element extends ParentElement {
       const viewOffset = this.view.getPixelOffset();
       const contentAreaSize = this.size.subtract(this.getTotalBoundarySize());
 
+      this.scrollDiv.className = "hidden-scrollbar";
+
       Object.assign(this.scrollDiv.style, {
         position: "absolute", // Position it absolutely
         top:

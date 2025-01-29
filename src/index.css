@@ -21,26 +21,14 @@ html {
   src: url("./assets/unifont_upper-16.0.01.otf") format("opentype");
 }
 
-/* Transparent scrollbar for Webkit-based browsers (Chrome, Edge, Safari) */
-div::-webkit-scrollbar {
-  width: 0px; /* Adjust scrollbar width */
+/* Hide scrollbar for modern browsers */
+.hidden-scrollbar {
+  overflow: auto; /* Retain scroll functionality */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
 }
 
-div::-webkit-scrollbar-track {
-  background: transparent; /* Transparent track */
-}
-
-div::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0); /* Semi-transparent thumb */
-  border-radius: 6px; /* Rounded corners */
-}
-
-div::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0); /* Darker thumb on hover */
-}
-
-/* Transparent scrollbar for Firefox */
-div {
-  scrollbar-color: rgba(0, 0, 0, 0) transparent; /* Thumb and track */
-  scrollbar-width: thin; /* Thin scrollbar */
+/* Hide scrollbar for WebKit-based browsers (Chrome, Safari, Edge) */
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none;
 }
