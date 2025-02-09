@@ -19,23 +19,23 @@ export type PageKey =
   | "mobileNav";
 
 export const PAGE_ROUTES = {
-  about: "/about",
-  projects: "/projects",
-  contact: "/contact",
+  about: "/about/",
+  projects: "/projects/",
+  contact: "/contact/",
   title: "/",
-  professionalExperience: "/professional-experience",
-  aboutThisSite: "/about-this-site",
-  mobileNav: "/mobile-nav",
+  professionalExperience: "/professional-experience/",
+  aboutThisSite: "/about-this-site/",
+  mobileNav: "/mobile-nav/",
 };
 
 export const PAGE_KEYS: { [key: string]: PageKey } = {
-  "/about": "about",
-  "/professional-experience": "professionalExperience",
-  "/about-this-site": "aboutThisSite",
-  "/projects": "projects",
-  "/contact": "contact",
+  "/about/": "about",
+  "/professional-experience/": "professionalExperience",
+  "/about-this-site/": "aboutThisSite",
+  "/projects/": "projects",
+  "/contact/": "contact",
   "/": "title",
-  "/mobile-nav": "mobileNav",
+  "/mobile-nav/": "mobileNav",
 };
 
 class MatrixController {
@@ -60,6 +60,11 @@ class MatrixController {
 
   public initialize() {
     const currentRoute = window.location.pathname;
+    //add / to the end of the pathname if it's not there
+    if (currentRoute[currentRoute.length - 1] !== "/") {
+      this.navigate(currentRoute + "/");
+      return;
+    }
     const pageKey = PAGE_KEYS[currentRoute] as PageKey;
     console.log("initializing MatrixController, currentRoute", pageKey);
     this.currentPage = pageKey;
