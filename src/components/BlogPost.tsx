@@ -1,5 +1,5 @@
 import "katex/dist/katex.min.css";
-import "./blogPost.css";
+import "./BlogPost.css";
 import { MDXProvider } from "@mdx-js/react";
 
 export function BlogPost({

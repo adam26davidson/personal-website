@@ -10,7 +10,5 @@
 }
 
 .fade-in-top {
-  animation: fadeInTop 1.5s ease-out;
+  animation: fadeInTop 1.2s ease-out;
 }
-
-
