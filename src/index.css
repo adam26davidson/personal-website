@@ -178,3 +178,26 @@ html {
     @apply bg-background text-foreground;
   }
 }
+
+/* (A) Put a horizontal scrollbar on every display equation */
+.katex-display {
+  /* keep the equation on one visual line */
+  white-space: nowrap;
+
+  /* allow the user to pan sideways */
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%; /* never exceed the viewport */
+  -webkit-overflow-scrolling: touch; /* smooth iOS scroll */
+
+  /* optional –– tighten KaTeX’s default margins */
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* (B) Let the inner KaTeX span grow wider than its parent
+   so the scroll area is as wide as the formula needs */
+.katex-display > .katex {
+  display: inline-block;
+  min-width: max-content;
+}

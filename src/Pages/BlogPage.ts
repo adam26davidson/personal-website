@@ -26,8 +26,12 @@ export class BlogPage extends ContentPage {
 
       const postDescription = new TextElement({
         key: `postDescription-${post.metaData.id}`,
-        text: `  ${post.metaData.description}`,
+        text: `${post.metaData.description}`,
         view: this.view,
+        widthType: "relative",
+        width: 1,
+        backgroundChar: SPACE_CHAR,
+        paddingLeft: 2,
       });
 
       const postDate = new TextElement({
@@ -44,6 +48,8 @@ export class BlogPage extends ContentPage {
         backgroundChar: SPACE_CHAR,
         paddingX: 1,
         spacing: 1,
+        widthType: "relative",
+        width: 1,
       });
       postSummaryContainerElement.setChildren([
         postHeader,
