@@ -8,6 +8,7 @@ import { ParentElement } from "./ParentElement";
 import { RealPoint } from "../UtilityTypes/RealPoint";
 import MatrixView from "../matrixView";
 import _ from "lodash";
+import { charsToPixelsX, charsToPixelsY } from "../Utilities/MiscUtils";
 
 export type CursorType = "pointer" | "text" | "default";
 export type SizingMethod = "absolute" | "relative" | "expand" | "content";
@@ -78,6 +79,16 @@ export abstract class Element extends ParentElement {
    * for subclass handling of click on element
    */
   protected abstract handleClick(): void;
+
+  /**
+   * for subclass handling of unregistering with view
+   */
+  protected abstract handleUnregisterWithView(): void;
+
+  /**
+   *
+   */
+  protected abstract handleTransitionStart(type: "enter" | "exit"): void;
 
   // class properties ---------------------------------------------------------
 
@@ -225,7 +236,7 @@ export abstract class Element extends ParentElement {
   // setters ------------------------------------------------------------------
 
   /**
-   * set a child's position relative to parent
+   * set an element's position relative to its parent
    * @param p new offset from parent
    */
   public setPosition(p: IntPoint): void {
@@ -374,6 +385,7 @@ export abstract class Element extends ParentElement {
    * unregister the element and all children with the view recursively
    */
   public unregisterWithView() {
+    this.handleUnregisterWithView();
     this.view.unregisterElement(this);
     this.isOnView = false;
     console.log("unregistering element", this.key);
@@ -399,12 +411,12 @@ export abstract class Element extends ParentElement {
       this.fullContentOffset = fullContentOffset;
       if (this.scrollDiv) {
         const viewOffset = this.view.getPixelOffset();
-        this.scrollDiv.style.top =
-          this.fullContentOffset.getY() * FONT_SIZE + viewOffset.getX() + "px";
-        this.scrollDiv.style.left =
-          this.fullContentOffset.getX() * (FONT_SIZE / 2) +
-          viewOffset.getY() +
-          "px";
+        this.scrollDiv.style.top = `${
+          charsToPixelsY(this.fullContentOffset.getY()) + viewOffset.getY()
+        }px`;
+        this.scrollDiv.style.left = `${
+          charsToPixelsX(this.fullContentOffset.getX()) + viewOffset.getX()
+        }px`;
       }
     }
 
@@ -472,6 +484,7 @@ export abstract class Element extends ParentElement {
     onComplete: () => void = () => {}
   ) {
     console.log("starting transition", type, "for", this.key);
+    this.handleTransitionStart(type);
     this.addOnTransition(type, onComplete);
     this.stage = type === "enter" ? "entering" : "exiting";
     const config =
@@ -537,8 +550,8 @@ export abstract class Element extends ParentElement {
     }
 
     if (this.scrollDiv) {
-      this.scrollDiv.style.height = this.size.getY() * FONT_SIZE + "px";
-      this.scrollDiv.style.width = this.size.getX() * (FONT_SIZE / 2) + "px";
+      this.scrollDiv.style.height = `${charsToPixelsY(this.size.getY())}px`;
+      this.scrollDiv.style.width = `${charsToPixelsX(this.size.getX())}px`;
     }
 
     this.reprocessContent();
@@ -674,9 +687,9 @@ export abstract class Element extends ParentElement {
   protected updateScrollShowing() {
     if (this.innerScrollDiv) {
       // set size of first child of scroll element
-      this.innerScrollDiv.style.height = `${
-        this.contentSize.getY() * FONT_SIZE
-      }px`;
+      this.innerScrollDiv.style.height = `${charsToPixelsY(
+        this.contentSize.getY()
+      )}px`;
     }
     if (!this.scrollable) return;
     const contentAreaSize = this.size.subtract(this.getTotalBoundarySize());
@@ -694,14 +707,14 @@ export abstract class Element extends ParentElement {
 
       Object.assign(this.scrollDiv.style, {
         position: "absolute", // Position it absolutely
-        top:
-          this.fullContentOffset.getY() * FONT_SIZE + viewOffset.getY() + "px", // Position at the top
-        left:
-          this.fullContentOffset.getX() * (FONT_SIZE / 2) +
-          viewOffset.getX() +
-          "px", // Position at the left
-        width: contentAreaSize.getX() * (FONT_SIZE / 2) + "px", // Full width
-        height: contentAreaSize.getY() * FONT_SIZE + "px", // Full height
+        top: `${
+          charsToPixelsY(this.fullContentOffset.getY()) + viewOffset.getY()
+        }px`, // Position at the top
+        left: `${
+          charsToPixelsX(this.fullContentOffset.getX()) + viewOffset.getX()
+        }px`, // Position at the left
+        width: `${charsToPixelsX(contentAreaSize.getX())}px`, // Full width
+        height: `${charsToPixelsY(contentAreaSize.getY())}px`, // Full height
         margin: "0", // Reset the margin
         padding: "0", // Reset the padding
         border: "0", // Reset the border
@@ -712,8 +725,9 @@ export abstract class Element extends ParentElement {
 
       this.innerScrollDiv = document.createElement("div");
       this.innerScrollDiv.style.width = "100%";
-      this.innerScrollDiv.style.height =
-        this.contentSize.getY() * FONT_SIZE + "px";
+      this.innerScrollDiv.style.height = `${charsToPixelsY(
+        this.contentSize.getY()
+      )}px`;
       this.scrollDiv.appendChild(this.innerScrollDiv);
 
       this.scrollDiv.addEventListener(

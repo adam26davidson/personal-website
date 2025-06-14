@@ -15,6 +15,7 @@ import {
   NUM_PARTICLES_MOBILE,
 } from "./constants";
 import { NavigateFunction } from "react-router";
+import { ReactNodeConfig } from "./UtilityTypes/ReactNodeConfig";
 
 interface TopSimilar {
   [key: string]: string[];
@@ -52,6 +53,9 @@ class MatrixView extends ParentElement {
     mainAxis: Y,
   });
   private elements: { [key: string]: Element } = {};
+  private reactNodeConfigs: { [key: string]: ReactNodeConfig } = {};
+  private setReactNodeConfigs: (components: Array<ReactNodeConfig>) => void =
+    () => {};
   private fontSize: number = 0;
   private matrixController: MatrixController = new MatrixController(this);
   private eventQueue: Event[] = [];
@@ -62,7 +66,8 @@ class MatrixView extends ParentElement {
     width: number,
     height: number,
     lattice: SpringLattice,
-    fontSize: number
+    fontSize: number,
+    setReactComponents: (components: Array<ReactNodeConfig>) => void = () => {}
   ) {
     if (this.isInitialized) {
       return;
@@ -71,6 +76,7 @@ class MatrixView extends ParentElement {
     this.size = new IntPoint(width, height);
     this.fontSize = fontSize;
     this.size = this.calculateDimensions(width, height);
+    this.setReactNodeConfigs = setReactComponents;
     if (this.size.getX() < MOBILE_WIDTH) {
       this.isMobile = true;
     }
@@ -101,6 +107,10 @@ class MatrixView extends ParentElement {
   public getContentOffset = () => ZERO_POINT;
 
   public getContentAreaSize = () => this.size;
+
+  public getStage = () => "main";
+
+  public getParent = () => null;
 
   public getContentLayerChar(
     location: IntPoint,
@@ -202,6 +212,20 @@ class MatrixView extends ParentElement {
     //throttledLog(matrix);
 
     return matrix;
+  }
+
+  public updateReactNodeConfig(key: string, reactNode: ReactNodeConfig) {
+    this.reactNodeConfigs[key] = reactNode;
+    this.setReactNodeConfigs(Object.values(this.reactNodeConfigs));
+  }
+
+  public removeReactNodeConfig(key: string) {
+    delete this.reactNodeConfigs[key];
+    this.setReactNodeConfigs(Object.values(this.reactNodeConfigs));
+  }
+
+  public getReactNodeConfig(key: string) {
+    return this.reactNodeConfigs[key];
   }
 
   // Event handling -----------------------------------------------------------

@@ -5,6 +5,8 @@ import { Route, Routes } from "react-router";
 import UnifontOtf from "./assets/unifont-16.0.01.otf";
 import UnifontUpperOtf from "./assets/unifont_upper-16.0.01.otf";
 import { useEffect, useState } from "react";
+import "highlight.js/styles/cybertopia-dimmer.css";
+import { ThemeProvider } from "next-themes";
 
 function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -37,9 +39,11 @@ function App() {
   return (
     <>
       {/* <SpringLatticeVisualization /> */}
-      <Routes>
-        <Route path="/*" element={<CharacterMatrix />} />
-      </Routes>
+      <ThemeProvider attribute="class" defaultTheme="dark">
+        <Routes>
+          <Route path="/*" element={<CharacterMatrix />} />
+        </Routes>
+      </ThemeProvider>
     </>
   );
 }

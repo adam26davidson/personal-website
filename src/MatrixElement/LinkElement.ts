@@ -30,15 +30,50 @@ const createLinkAnimationConfig = (
     }
   }
   return {
-    type: "rowTracer",
+    type: "diagonalSwipe",
     config: {
-      tailLength: 10,
-      headSpeed: 1,
-      randomizationRange: 3,
+      slant: 2,
+      tailLength: isMobile ? 10 : 30,
+      headSpeed: isMobile ? 1 : 2,
+      randomizationRange: 5,
       use,
     },
   };
 };
+
+export class ButtonStyleLinkElement extends TextElement {
+  constructor(
+    key: string,
+    title: string,
+    view: MatrixView,
+    animate: boolean = true
+  ) {
+    super({
+      key,
+      view,
+      text: title,
+      bordered: true,
+      paddingX: 1,
+      backgroundChar: SPACE_CHAR,
+      entranceAnimationConfig: animate
+        ? createLinkAnimationConfig("entrance", view.getIsMobile())
+        : undefined,
+      mouseEnterAnimationConfig: createLinkAnimationConfig(
+        "interaction",
+        view.getIsMobile()
+      ),
+      mouseExitAnimationConfig: createLinkAnimationConfig(
+        "interaction",
+        view.getIsMobile()
+      ),
+      exitAnimationConfig: animate
+        ? createLinkAnimationConfig("exit", view.getIsMobile())
+        : undefined,
+      hoverTransform: "bold",
+      cursor: "pointer",
+    });
+  }
+}
 
 export class LinkElement extends TextElement {
   constructor(
@@ -68,7 +103,7 @@ export class LinkElement extends TextElement {
       exitAnimationConfig: animate
         ? createLinkAnimationConfig("exit", view.getIsMobile())
         : undefined,
-      hoverTransform: "uppercase",
+      hoverTransform: "bold",
       cursor: "pointer",
     });
   }

@@ -11,7 +11,7 @@ export class AboutPage extends ContentPage {
     const headerElement = new HeaderElement(
       "aboutHeader",
       "About Me",
-      this.view
+      this.view,
     );
 
     const textElement = new ParagraphElement(

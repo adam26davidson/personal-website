@@ -1,11 +1,12 @@
 import { SPACE_CHAR } from "../constants";
+import { toBold } from "../Utilities/MiscUtils";
 import { AXES } from "../UtilityTypes/Axes";
 import { IntPoint } from "../UtilityTypes/IntPoint";
 import { Element, ElementConfig } from "./Element";
 
 const CHILD_PLACEHOLDER = "XxcPzi6xKg";
 
-export type HoverTextTransform = "none" | "uppercase";
+export type HoverTextTransform = "none" | "uppercase" | "bold";
 export interface TextElementConfig extends ElementConfig {
   text: string;
   hoverTransform?: HoverTextTransform;
@@ -43,6 +44,8 @@ export default class TextElement extends Element {
   protected handleMouseEnter() {
     if (this.hoverTextTransform === "uppercase") {
       this.setCurrentText(this.templateText.toUpperCase());
+    } else if (this.hoverTextTransform === "bold") {
+      this.setCurrentText(toBold(this.templateText));
     }
   }
 
@@ -53,6 +56,8 @@ export default class TextElement extends Element {
   }
 
   protected handleClick() {}
+  protected handleUnregisterWithView() {}
+  protected handleTransitionStart(): void {}
 
   protected drawOwnContent(offset: IntPoint) {
     console.log("drawing text element content for", this.key);

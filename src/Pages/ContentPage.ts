@@ -79,7 +79,7 @@ export abstract class ContentPage extends Page {
     const contentContainer = new ContainerElement({
       key: "contentContainer",
       view: this.view,
-      mainAxis: X,
+      mainAxis: Y,
       backgroundChar: DOT_CHAR,
       spacing: 1,
       width: 1,
@@ -169,7 +169,7 @@ export abstract class ContentPage extends Page {
       widthType: "expand",
       height: 1,
       heightType: "relative",
-      paddingY: 2,
+      paddingY: 0,
       entranceTiming: "parallel",
       exitTiming: "parallel",
       justifyContent: "center",

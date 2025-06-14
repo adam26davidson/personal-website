@@ -1,0 +1,382 @@
+import { CharacterSampler } from "./components/character-sampler/character-sampler";
+import { CharacterContext } from "./components/character-context/character-context";
+import { MappingVisual } from "./components/mapping-visual/mapping-visual";
+import { TransformVisual } from "./components/transform-visual/transform-visual";
+
+# About This Site: Part 1 - Shape Contexts
+
+Jun 14 2025
+
+<CharacterContext />
+
+## Introduction
+
+Making this website was a lot of fun, so I thought I would share a bit about how the site works and some of the things I learned in the process of making it.
+
+This site is made from a grid of fixed size characters into which React components can be "embedded" (or really just overlaid).
+
+When you click or touch somewhere and drag around, there is a spring lattice simulation running in the background that is attracted upwards under your mouse. The distance that the masses in the lattice are displaced from their resting position at a certain point determines the character that is displayed there.
+
+The further the lattice is from zero under a character, the less similar the displayed character is to the original character. A machine learning descriptor called "Shape contexts" was used to precompute the similarity between characters. The use of Shape contexts to compute character similarity was inspired by the website [shapecatcher.com](https://shapecatcher.com), created by Benjamin Milde.
+
+In Part 1 I will explain what shape contexts are, and show how they were used in this website. A lot of this post will just be a paraphrase of [the original paper](https://people.eecs.berkeley.edu/~malik/papers/BMP-shape.pdf) by Serge Belongie, Jitendra Malik, and Jan Puzicha, with some interactive components, and more or less detail in some parts.
+
+## What are "Shape contexts"
+
+The initial, vague idea I had for this site was that it would be built on a 2d matrix of fixed width characters, and when a user clicked somewhere it would cause the characters in the matrix to mutate to "similar looking" characters. In my head I had a vision of a sort of wave propagating out radially from the click, "corrupting" the characters as it went across the page to other characters that were just _slightly_ off.
+
+I realized pretty quickly that figuring out what characters are similar to other characters is not as simple as it first sounds. (!)
+
+In my research I found the aforementioned website [shapecatcher.com](https://shapecatcher.com), which there is a good chance you have already come across. On this site you can draw into a canvas and the site will (very accurately!) compute and display a list of the most similar looking Unicode characters. Exactly the type of thing I was looking for!
+
+The Creator of the shapecatcher site Benjamin Milde very helpfully has a little blurb on the site about how this similarity computation is done, where "Shape contexts" are introduced as:
+
+> a robust mathematical way of describing the concept of similarity between shapes, [a Shape context] is a feature descriptor first proposed by Serge Belongie and Jitendra Malik
+
+[The original paper on Shape contexts](https://people.eecs.berkeley.edu/~malik/papers/BMP-shape.pdf) shows us how to compute this shape context descriptor, and use it quantify how similar the shapes in two images are. This feature descriptor is handcrafted, old-school style, to capture structure in an image that corresponds to our intuitive understanding of "shape", and happens to work really well.
+
+The general idea is that you get a sampling of points along the contours of the shape in your image, then at each point you compute the shape context at that point, which is a histogram that gives you a fuzzy picture of "where the rest of the points are" relative to that point. Given two shapes, you then can find the mapping between points in the two shapes that minimizes the differences between the contexts of mapped points. This gives you a mapping between points on the two characters that are similar to each other, in that the rest of their shape is distributed similarly in relation to each of the points. You can use this mapping to transform one shape onto the other, and see how much they line up. By factoring how much you had to transform a shape to get it to look like the other, and how closely the shape contexts align, you can get a measure of how similar the shapes are.
+
+This may sound confusing but it is actually pretty simple once you understand each of the pieces.
+
+## Implementing Shape contexts
+
+I will outline how Shape contexts work below with some interactive components to give you a sense of what is going on.
+
+### Extracting sample points
+
+To start, we need to get a set of sampled points along the edges of the shape in question. To do this for characters we can:
+
+1. Render the character in question to an image
+2. Run edge detection on the image to find the external and internal contours of the shape
+3. Sample a bunch of points on the edges found in step 1, ideally equally spaced along the contours
+
+You can play around with how this works below.
+
+<CharacterSampler />
+
+### Computing Shape contexts
+
+So now that we have the sampled points for any character, we can actually compute the shape context at each point.
+
+So what is the shape context at a point? To get an idea of it, imagine a dart-board with point $p$ as it's bullseye. This dartboard consists of a series of concentric circles with $p$ as their center, and evenly spaced lines radiating out from the point. This defines a bunch of regions in the image, outlined by the dart board shape, which we will call **bins**.
+
+To get the shape context at $p$, just count up the number of other points in the shape that fall into each bin. This will just be a list of numbers.
+
+Below you can click on points to see the shape context at that point, and to
+
+<CharacterContext />
+
+In [the paper](https://people.eecs.berkeley.edu/~malik/papers/BMP-shape.pdf) Serge and Jitendra state that we should do this in polar log space, in order to capture more detail about the shape in the immediate surroundings of the point. You can tune the number of pie slices and concentric circles you use based on your application.
+
+This histogram is the Shape context at $p$. You can imagine how this histogram sort of captures the rough, relative distribution of all of the other points in the image in terms of their rough direction (captured by the pie slices), and rough distance (captured by the concentric circles) from $p$.
+
+So now we do this for every point, meaning that if we had $n$ points, we now compile $n$ histograms. This data is what we assume captures some essential information about the _shape_ of the image we have processed.
+
+## Using Shape contexts to quantify similarity
+
+Ok, so let's say that we compiled a set of $n$ histograms for two different shapes. Now what? How do we use these things to actually see how similar two shapes (or in our case, rendered Unicode characters) are?
+
+Let's assume we have two characters that are quite similar, say it is B and 8. then what we want to do is to ultimately compare the set of histograms of these two shapes in some way, and the way we choose to do this should result in a numerical value that suggests to us that the shapes of 'B' and '8' are indeed quite similar. But how to go about the nitty gritty of this?
+
+Let's simplify things and think about a single sampled point. Imagine a point at the top left corner of "B". If we compared this point to a point near the top left corner in "8" we would expect their Shape contexts to be quite similar, because the distribution of the rest of the shape relative to this point is pretty similar. By contrast, if we had taken the top left point in "P", for example, we expect the histogram to be comparatively less similar to that of the point in the top left of B.
+
+If we were to try to compare some point in the middle of 8 to one in the top left of B, we would also find that the histograms are not very similar, giving an indication that the two shapes are not similar, which is not what we want.
+
+Ok, so from this it looks like all we need to do is to look for points that are at a similar relative position on each shape, and then see how different their histograms are. Meaning we would want to compare the histogram at a point at the top left of "B" to a point on the top left of "8", and a point at the middle of "B" to one in the middle of "8", etc. for all points. In essence, we need to find a mapping from all the sampled points on "B" to all the sampled points on "8", in this way.
+
+You may have realized that we've used some rather fuzzy terminology in the above paragraph. We need to be rigorous about what we mean by points having a 'similar relative position in the shape'. It may seem simple to see for us humans that the point at the top left of 8 corresponds to a point at the top left of B, but really, isn't this sort of a mini version of the problem we are trying to solve in the first place? To know where a point is 'in the context of the shape', you need to have some idea of what the shape is in the first place!
+
+As humans, we can look at the shapes "A" and "4", and say that a point on the middle horizontal bar in "A" should correspond to the middle horizontal bar in "4", but these descriptions of "the middle horizontal bar" assume an intuitive grasp of the shapes of these 2 characters that are not at all obvious in the raw coordinates of the sampled points.
+
+So it looks like we have a mini version of the problem embedded within the problem itself. You might be asking yourself "why can't we just compare the _coordinates_ of the two points as a measure of "where they are in the shape?". That's a great question. For one thing, we want the mapping between points to not be invariant with respect to scale and translation (to some degree). Meaning that if the shape is shifted around in the image, or is smaller or larger, then we don't want this to affect the mapping. For example, we want our mapping method to be able to map the top left of "p" to that of "P", the actual coordinates may be fairly different, since 'p' is a bit smaller and shifted down.
+
+### Finding a Mapping
+
+Fortunately, as you may have already guessed, the shape contexts we calculated contain exactly the information needed to find a mapping as described above. If we just compare the histograms for two points, this information is designed to capture the distribution of the shape relative to a point, so in other words, this is capturing "where the shape is relative to the point". What we said we needed to capture was "where the point is in the shape". And this is essentially the same information.
+
+So now what we can do is find the mapping that minimizes the difference between the histograms (Shape contexts) of matched points. First, let's be more precise about what we mean by "the difference between the histograms". In the paper they lay out the Chi-squared test as the natural choice to compute the difference. Thus, the following formula can give us a measure of "how different" two histograms $h_1$ and $h_2$ are:
+
+$$
+\frac{1}{2} \sum_{k=1}^{K} \frac{[h_1(k) - h_2(k)]^2}{h_1(k) + h_2(k)}
+$$
+
+Using this measure of the difference, or "cost" between histograms, we can go about finding the mapping that results in the minimum cost by solving [The Assignment problem](https://en.wikipedia.org/wiki/Assignment_problem)
+
+<MappingVisual />
+
+You can see how This results in quite a nice (but not perfect) mapping between corresponding points on similar shapes. The total cost is the sum of all the costs for matched points.
+
+This cost on it's own would give a fairly good measure of the shape similarities, but to get an even better picture, we can use this mapping to warp one of the shapes to force it to line up as much as possible with the other shape. We can do this by finding a transformation (a "warping" of space) that minimizes the distances between points that got mapped to one another.
+
+### Finding a transformation
+
+<TransformVisual />
+
+Then we can see how much we had to "warp space" to get one shape to align with the other, and incorporate this into our measure of how similar the shapes are.
+
+We can use a simple affine transformation to do this, although in the paper they use a more complicated thin plate spline (TPS). A TPS can deal with local distortions of the image, and is the better choice for increased accuracy, but for our purposes, an affine transformation does the job well enough.
+
+$$
+T(\boldsymbol{p}) = A\boldsymbol{p}+\boldsymbol{o}
+$$
+
+We need to find the 2x2 matrix $A$ and translation vector $\boldsymbol{o}$ that minimizes the distance between the mapped points. This is the "Least squares problem" - and it has a satisfying closed form solution that I will walk through below. Feel free to skip or skim this math if you are unfamiliar with calculus or linear algebra - but if not I will try to break it down enough to understand even if your skills in these areas is a little rusty (as were mine when starting on this journey)
+
+Lets call the points on the first shape $p_i$ and points on the second shape $q_i$, with the assumption that we have ordered each sequence of points according to the mapping found in the last step. In other words, if $f : \mathbb{R}^2 \rightarrow \mathbb{R}^2$ is our mapping, then for all $1 \leq i \leq n$, $f(p_i) = q_i$.
+
+If our transformed points using $T$ above are $p_i' = T(p_i)$, then the error for a particular pair of points is given by:
+
+$$
+E_i = (p_{ix}' - q_{ix})^2 + (p_{iy}' - q_{iy})^2
+$$
+
+This is just the square of the distance between the two points. Minimizing the square of the distance is the same as minimizing the distance, and we can avoid having a square root in the expression. So the total cost to be minimized over the $n$ points is
+
+$$
+E = \sum_{i=1}^{n} (p_{ix}' - q_{ix})^2 + (p_{iy}' - q_{iy})^2
+$$
+
+if $A = \begin{bmatrix}
+a & b \\
+c & d
+\end{bmatrix}$ and $\boldsymbol{o} = \begin{bmatrix}
+o_x \\
+o_y
+\end{bmatrix}$ then $p_{ix}'$ and $p_{iy}'$ can be written as:
+
+$$
+p_{ix}' = a p_{ix} + b p_{iy} + o_x
+$$
+
+$$
+p_{iy}' = c p_{ix} + d p_{iy} + o_y
+$$
+
+so now if you substitute this into the error expression it looks like this:
+
+$$
+E = \sum_{i=1}^{n} (\textcolor{lightgreen}{a} p_{ix} + \textcolor{lightgreen}{b} p_{iy} + \textcolor{lightgreen}{o_x} - q_{ix})^2
++ (\textcolor{lightgreen}{c} p_{ix} + \textcolor{lightgreen}{d} p_{iy} + \textcolor{lightgreen}{o_y} - q_{iy})^2
+$$
+
+The variables above are $\textcolor{lightgreen}{a}$, $\textcolor{lightgreen}{b}$, $\textcolor{lightgreen}{c}$, $\textcolor{lightgreen}{d}$, $\textcolor{lightgreen}{o_x}$, and $\textcolor{lightgreen}{o_y}$. I will write variables (the things whose values we are trying to find) in green from here on out. The data points are fixed constants.
+
+We need to find the set of values for these variables that minimizes $E$, because we are trying to find the transformation that maps the points of the first shape as closely as possible to the points of the second shape. We can find critical points (maxima, minima, or saddle points) of $E$ by taking the partial derivative of $E$ with respect to each variable, and setting each of these equations to 0, and solving the resulting system of equations. For example, here is the partial derivative of $E$ with respect to $a$ (the chain rule was used here):
+
+$$
+\frac{\partial E}{\partial a} = \sum_{i=1}^{n} 2(\textcolor{lightgreen}{a} p_{ix} + \textcolor{lightgreen}{b} p_{iy} + \textcolor{lightgreen}{o_x} - q_{ix})p_{ix}
+$$
+
+rearranging this a bit and setting to 0 we get:
+
+$$
+0 = 2\textcolor{lightgreen}{a}\sum_i p_{ix}^2 + 2\textcolor{lightgreen}{b} \sum_i p_{ix} p_{iy} + 2\textcolor{lightgreen}{o_x} \sum_i p_{ix} - 2\sum_i q_{ix} p_{ix}
+$$
+
+We will get 6 of these equations, one for each of our variables. Notice that all the stuff inside summations above is constant, meaning that the sums themselves are just constants, and all of the terms are linear, meaning we don't have any higher powers of our variables present. This will be true for all 6 of these equations, meaning we will have a system of linear equations to solve.
+
+The way I just described this is, to me at least, more concrete and easier to reason about, but in practice, we can vastly simplify the algebra by working with matrices.
+
+we can rewrite $E$ in terms of a matrix multiplications and the $trace()$ operator, which just takes the sum of the diagonal entries in a matrix.
+
+First, lets define a combined matrix $M$ that contains both $A$ and $\boldsymbol{o}$
+
+$$
+\textcolor{lightgreen}{M} =
+\begin{bmatrix}
+  \textcolor{lightgreen}{a} & \textcolor{lightgreen}{c} \\
+  \textcolor{lightgreen}{b} & \textcolor{lightgreen}{d} \\
+  \textcolor{lightgreen}{o_x} & \textcolor{lightgreen}{o_y}
+\end{bmatrix}
+$$
+
+Then we can define a "homogenized" $\tilde{P}$, which is just the points from the first shape, concatenated with a column of 1s. The ones are there so that we can multiply this with our new $\textcolor{lightgreen}{M}$, which has $\boldsymbol{\textcolor{lightgreen}{o}}$ in it. We also define the matrix $Q$ as the matrix of all the points in the second shape. There is no need to homogenize (add a 1s column to) $Q$.
+
+$$
+\tilde{P} =
+\begin{bmatrix}
+  p_{11} & p_{12} & 1 \\
+  p_{21} & p_{22} & 1 \\
+  \vdots & \vdots & \vdots \\
+  p_{n1} & p_{n2} & 1
+\end{bmatrix},
+Q = \begin{bmatrix}
+  q_{11} & q_{12} \\
+  q_{21} & q_{22} \\
+  \vdots & \vdots \\
+  q_{n1} & q_{n2}
+\end{bmatrix}
+$$
+
+Now consider the matrix:
+
+$$
+\tilde{P}M - Q = \begin{bmatrix}
+  \textcolor{lightgreen}{a}p_{11} + \textcolor{lightgreen}{b}p_{12} + \textcolor{lightgreen}{o_x} - q_{11} & \textcolor{lightgreen}{c}p_{11} + \textcolor{lightgreen}{d}p_{12} + \textcolor{lightgreen}{o_y} - q_{12} \\
+  \textcolor{lightgreen}{c}p_{21} + \textcolor{lightgreen}{d}p_{22} + \textcolor{lightgreen}{o_x} - q_{21} & \textcolor{lightgreen}{c}p_{21} + \textcolor{lightgreen}{d}p_{22} + \textcolor{lightgreen}{o_y} - q_{22} \\
+  \vdots & \vdots \\
+  \textcolor{lightgreen}{a}p_{n1} + \textcolor{lightgreen}{b}p_{n2} + \textcolor{lightgreen}{o_x} - q_{n1} & \textcolor{lightgreen}{c}p_{n1} + \textcolor{lightgreen}{d}p_{n2} + \textcolor{lightgreen}{o_y} - q_{n2}
+\end{bmatrix}
+$$
+
+If you look back up at the equation for the error $E$, you will see that each row in the above looks quite similar to the error at a point and its mapped counterpart. In fact, if you were to square every entry in this matrix, and then sum all the entries, this would be exactly $E$. A way to get $E$ from this matrix in a different way, is to multiply it with its transpose, yielding a $2 \times 2$ matrix, then take the $\operatorname{trace}$ of that matrix:
+
+$$
+E = \operatorname{trace}((\tilde{P}\textcolor{lightgreen}{M} - Q)^T(\tilde{P}\textcolor{lightgreen}{M} - Q))
+$$
+
+$\operatorname{trace}$ here just adds up the diagonal elements in a square matrix, so we are ignoring the top right and bottom left of the $2 \times 2$ matrix. Here is what that matrix will look like more concretely:
+
+$$
+\begin{bmatrix}
+  \boxed{\sum (\textcolor{lightgreen}{a}p_{i1} + \textcolor{lightgreen}{b}p_{i2} + \textcolor{lightgreen}{o_x} - q_{i1})^2}
+  & \sum (\textcolor{lightgreen}{a}p_{i1} + \textcolor{lightgreen}{b}p_{i2} + \textcolor{lightgreen}{o_x} - q_{i1})(\textcolor{lightgreen}{c}p_{i1} + \textcolor{lightgreen}{d}p_{i2} + \textcolor{lightgreen}{o_y} - q_{i2}) \\
+  \sum (\textcolor{lightgreen}{a}p_{i1} + \textcolor{lightgreen}{b}p_{i2} + \textcolor{lightgreen}{o_x} - q_{i1})(\textcolor{lightgreen}{c}p_{i1} + \textcolor{lightgreen}{d}p_{i2} + \textcolor{lightgreen}{o_y} - q_{i2})
+  & \boxed{\sum (\textcolor{lightgreen}{c}p_{i1} + \textcolor{lightgreen}{d}p_{i2} + \textcolor{lightgreen}{o_y} - q_{i2})^2}
+\end{bmatrix}
+$$
+
+I think that dealing with trace sort of confuses things when first tackling this problem. We can actually separate out the x and y parts of the Error to avoid using trace, and get to the same place in the end.
+
+You may have noticed that when taking a partial derivative with respect to $a$, only the first column of $M$, namely $\textcolor{lightgreen}{a}$, $\textcolor{lightgreen}{b}$, and $\textcolor{lightgreen}{o_x}$ were present in the resulting expression. This will be true when taking the partial derivative with respect to $\textcolor{lightgreen}{b}$ and $\textcolor{lightgreen}{o_x}$ as well, since the term containing the second column of $\textcolor{lightgreen}{M}$, i.e. $(\textcolor{lightgreen}{c} p_{ix} + \textcolor{lightgreen}{d} p_{iy} + \textcolor{lightgreen}{o_y} - q_{iy})^2$, is just a constant in these cases. Likewise, the partial derivatives with respect to $\textcolor{lightgreen}{c}$, $\textcolor{lightgreen}{d}$, and $\textcolor{lightgreen}{o_y}$ will each only contain $\textcolor{lightgreen}{c}$, $\textcolor{lightgreen}{d}$, and $\textcolor{lightgreen}{o_y}$.
+
+Basically, the x and y parts of $E$ are completely independent of one another. What we really will have here, after taking the gradient, is 2 systems of linear equations each with 3 variables and 3 unknowns. Also, conveniently, we can rewrite $E$ as the sum of two terms as follows:
+
+$$
+E = \sum_{i=1}^{n} (\textcolor{lightgreen}{a} p_{ix} + \textcolor{lightgreen}{b} p_{iy} + \textcolor{lightgreen}{o_x} - q_{ix})^2
++ \sum_{i=1}^{n}(\textcolor{lightgreen}{c} p_{ix} + \textcolor{lightgreen}{d} p_{iy} + \textcolor{lightgreen}{o_y} - q_{iy})^2
+$$
+
+We can call the first term $E_x$ and the second $E_y$. Now we don't need a trace. We can write:
+
+$$
+E_x = (\tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}  - \boldsymbol{q}_x)^T(\tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}   - \boldsymbol{q}_x)
+$$
+
+Where $\boldsymbol{\textcolor{lightgreen}{m_x}} $ is the first column of $M$, and $\bold{q}_x$ is the column of x coordinates in $Q$. There will be a similar equation for E_y, but let's focus on $E_x$ first, since the mechanics will be identical in both cases.
+
+Now we can start to use some facts from vector calculus to help us compute the gradient of this thing. If we have a function of multiple variables in "quadratic form":
+
+$$
+f(\boldsymbol{\textcolor{lightgreen}{x}}) = \boldsymbol{\textcolor{lightgreen}{x}}^T A\boldsymbol{\textcolor{lightgreen}{x}}
+$$
+
+where $\boldsymbol{\textcolor{lightgreen}{x}}$ is an $n \times 1$ vector of variables, and $A$ is an $n \times n$ matrix of constants, then the gradient will be:
+
+$$
+\nabla f(\boldsymbol{\textcolor{lightgreen}{x}}) = (A^T + A)\boldsymbol{\textcolor{lightgreen}{x}}
+$$
+
+$A$ functions as a table of coefficients for each of the order 2 terms $a_{ij} x_i x_j$.
+If the function is in linear form, things are simpler. If we have:
+
+$$
+f(\boldsymbol{\textcolor{lightgreen}{x}}) = b^T \boldsymbol{\textcolor{lightgreen}{x}},
+$$
+
+$$
+\nabla f(\boldsymbol{\textcolor{lightgreen}{x}}) = b
+$$
+
+$b$ above functions as the list of coefficients of order 1 terms. Equipped with these tools, lets transform the expression for $E_x$ into something resembling the above. First of all we can distribute the Transpose around the first parenthesis:
+
+$$
+(\boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T   - \boldsymbol{q}_x^T)(\tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}  - \boldsymbol{q}_x)
+$$
+
+Then expand the multiplication:
+
+$$
+\boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}} - \boldsymbol{q}_x^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}} - \boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \boldsymbol{q}_x + \boldsymbol{q}_x^T \boldsymbol{q}_x
+$$
+
+Now notice that $\boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \boldsymbol{q}_x$ is a scalar value, and a scalar is identical to its own transpose, so we can rewrite it:
+
+$$
+\boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \boldsymbol{q}_x = (\boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \boldsymbol{q}_x)^T = \boldsymbol{q}_x^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}
+$$
+
+so now we have:
+
+$$
+E_x = \boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}  - 2 \boldsymbol{q}_x^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}} + \boldsymbol{q}_x^T \boldsymbol{q}_x
+$$
+
+Ok, this is looking like something that we can work with! If we apply the rules from above, we can see the first term, $\boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}$ is in the form $\boldsymbol{\textcolor{lightgreen}{x}}^T A\boldsymbol{\textcolor{lightgreen}{x}}$, where the constant matrix $\tilde{P}^T \tilde{P}$ takes the place of $A$. The second term, $2 \boldsymbol{q}_x^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}$ is in linear form, $b^T \boldsymbol{\textcolor{lightgreen}{x}}$, where $2 \boldsymbol{q}_x^T \tilde{P}$ takes the place of $b^T$. the last term, $\boldsymbol{q}_x^T \boldsymbol{q}_x$, is just a scalar constant, so it will just disappear when the gradient is taken. Applying this we get:
+
+$$
+\nabla E_x = ((\tilde{P}^T \tilde{P})^T + \tilde{P}^T \tilde{P}) \boldsymbol{\textcolor{lightgreen}{m_x}} - 2 \tilde{P}^T \boldsymbol{q}_x
+$$
+
+$$
+= 2 \tilde{P}^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}  - 2 \tilde{P}^T \boldsymbol{q}_x
+$$
+
+Setting this to the zero vector, we get the equation:
+
+$$
+\tilde{P}^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}} = \tilde{P}^T \boldsymbol{q}_x
+$$
+
+To solve for our vector of variables, $\boldsymbol{\textcolor{lightgreen}{m_x}}$, all we have to do is to multiply both sides by $(\tilde{P}^T \tilde{P})^{-1}$, (assuming it's invertible) which gives us:
+
+$$
+\boldsymbol{\textcolor{lightgreen}{m_x}} = (\tilde{P}^T \tilde{P})^{-1} \tilde{P}^T \boldsymbol{q}_x
+$$
+
+The expression $(\tilde{P}^T \tilde{P})^{-1} \tilde{P}^T$ actually has a name. It's called the pseudo-inverse of $\tilde{P}$, denoted $\tilde{P}^+$. To give you an idea of why this is called a pseudo-inverse, if $\tilde{P}$, were a square, full-rank matrix, then its pseudo-inverse would be the same as its normal inverse, but this is not the case for us. So we have the very satisfying result that:
+
+$$
+\boldsymbol{\textcolor{lightgreen}{m_x}} = \tilde{P}^+ \boldsymbol{q}_x
+$$
+
+Here we can be certain that this is a minimum, since it is the sum of squares of a linear combination of the variables. If you look at the original equation for $E$, you can convince yourself that if any of the variables go to positive or negative infinity, so will $E$.
+
+We can go through the exact same logic as above for the y side of things, which will yield:
+
+$$
+\boldsymbol{\textcolor{lightgreen}{m_y}} = \tilde{P}^+ \boldsymbol{q}_y
+$$
+
+This means we can package things up nicely in one equation:
+
+$$
+\textcolor{lightgreen}{M} = \tilde{P}^+ Q
+$$
+
+WOW that's satisfying! - We have a closed form solution!
+
+## The final similarity calculation
+
+So now that we have found the best affine transformation from one shape to the other, we can measure the intensity of this transformation, and add in a term for this in our similarity index. We can also incorporate the minimum Error $E$ found in the best mapping, to give us a measure of how successfully we were able to line up the two shapes.
+
+We only found the mapping from shape 1 to shape 2, but you could also do it the other way as well (mapping from shape 2 to shape 1) to get an even more accurate value, but I just did one of these and got fairly good results.
+
+To measure the intensity of the transformation matrix A, we can see how different it is from the identity matrix:
+
+$$
+E_A = \sum_{i,j} (I_{ij} - A_{ij})^2
+$$
+
+We could impose a penalty for the translation vector $\boldsymbol{o}$ as well, but I opted not to penalize translation.
+
+If we call the remaining error between the two shapes after the transformation is applied $E_R$, then we can get our final measure of similarity:
+
+$$
+E = \alpha E_R + \beta E_A
+$$
+
+where $\alpha$ and $\beta$ are coefficients that can be tuned as needed.
+
+## Using shape similarity in the site
+
+The way that I applied this measure of shape similarity was to precompute a list of top 100 most similar shapes for each character, and generate a json file that is part of this website. This is an order $n^2$ process that is the weakest link in my whole setup (I am ashamed to say it takes like an hour to run despite parallelizing), and it would be fun to eventually look into methods of speeding this up.
+
+One challenge of shape contexts is that you don't end up with some embedding of shape that ends up in some shared embedding space, where you could cluster similar shapes for example. By contrast if you took the outputs of one of the later layers in CNN for image recognition, for example, then you would have some abstracted representation for each character, all embedded in the same vector space, allowing you to do k-clustering or other things to speed up the process of trying to find the top 100 most similar shapes. Of course, the features encoded in these embeddings could be all sorts of things, and are not guaranteed to line up perfectly with what we would consider "shape".
+
+Unfortunately the comparisons using shape contexts are not like this, you have to find a mapping between each pair of shapes in order to get a measure of similarity - instead of just a distance between vectors.
+
+One thing you could do would be to first rule out a bunch of shapes using the neural net, then sort the remaining characters using shape contexts.
+
+Anyways, Thank you so much for reading this far in this post if you have! I hope to write a part 2 soon, going into the spring simulation, so keep an eye out if that sounds interesting to you

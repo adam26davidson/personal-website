@@ -4,7 +4,7 @@ import { ContainerElement } from "./ContainerElement";
 import { Y } from "../UtilityTypes/Axes";
 
 export class ContentContainerElement extends ContainerElement {
-  constructor(key: string, view: MatrixView) {
+  constructor(key: string, view: MatrixView, noYPadding?: boolean) {
     super({
       key,
       view,
@@ -17,13 +17,14 @@ export class ContentContainerElement extends ContainerElement {
       bordered: false,
       scrollable: true,
       spacing: 1,
+      paddingY: noYPadding ? 0 : 1,
       backgroundChar: DOT_CHAR,
       entranceAnimationConfig: {
         type: "diagonalSwipe",
         config: {
           slant: 2,
           tailLength: view.getIsMobile() ? 20 : 40,
-          headSpeed: 3,
+          headSpeed: view.getIsMobile() ? 3 : 5,
           randomizationRange: 5,
           use: "entrance",
         },
@@ -33,7 +34,7 @@ export class ContentContainerElement extends ContainerElement {
         config: {
           slant: 2,
           tailLength: view.getIsMobile() ? 20 : 40,
-          headSpeed: 3,
+          headSpeed: view.getIsMobile() ? 3 : 5,
           randomizationRange: 5,
           use: "exit",
         },

@@ -218,7 +218,7 @@ export class DiagonalSwipeAnimation extends HeadBasedAnimation {
       this.headDistance >=
       this.element.getSize().getX() +
         this.slant * this.element.getSize().getY() +
-        2 * this.tailLength +
+        this.tailLength +
         2
     );
   }

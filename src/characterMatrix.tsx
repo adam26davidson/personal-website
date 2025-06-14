@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SpringLattice } from "./springLattice";
 import MatrixView from "./matrixView";
 import _ from "lodash";
@@ -10,6 +10,8 @@ import {
   NUM_PARTICLES_MOBILE,
 } from "./constants";
 import { IntPoint } from "./UtilityTypes/IntPoint";
+import { ReactNodeConfig } from "./UtilityTypes/ReactNodeConfig";
+import { BlogPost } from "./components/BlogPost";
 
 const matrixView = new MatrixView();
 const lattice = new SpringLattice();
@@ -20,6 +22,9 @@ function CharacterMatrix() {
   const navigate = useNavigate();
   const location = useLocation();
   const offset = useRef({ x: 0, y: 0 });
+  const [componentConfigs, setComponentConfigs] = useState<
+    Array<ReactNodeConfig>
+  >([]);
 
   useEffect(() => {
     matrixView.setRoute(location.pathname);
@@ -94,7 +99,13 @@ function CharacterMatrix() {
       lattice.update();
     }, 20);
 
-    matrixView.initialize(width, height, lattice, FONT_SIZE);
+    matrixView.initialize(
+      width,
+      height,
+      lattice,
+      FONT_SIZE,
+      setComponentConfigs
+    );
     const matrix = matrixView.getSurfaceMatrix();
     if (ref.current) {
       ref.current.innerHTML = matrix.map((row) => row.join("")).join("\n");
@@ -114,35 +125,14 @@ function CharacterMatrix() {
     matrixView.handleMouseDown(x, y);
   };
 
-  // const handleTouchStart = (event: React.TouchEvent) => {
-  //   const [x, y] = getNormalizedTouchPosition(event);
-  //   matrixView.handleMouseDown(x, y);
-  // };
-
-  // const handleTouchMove = (event: React.TouchEvent) => {
-  //   const [x, y] = getNormalizedTouchPosition(event);
-  //   matrixView.handleMouseMove(x, y);
-  // };
-
   const handleMouseUp = () => {
     matrixView.handleMouseUp();
   };
-
-  // const handleTouchEnd = () => {
-  //   matrixView.handleMouseUp();
-  // };
 
   const handleMouseMove = (event: React.MouseEvent) => {
     const [x, y] = getNormalizedMousePosition(event);
     matrixView.handleMouseMove(x, y);
   };
-
-  // const getNormalizedTouchPosition = (event: React.TouchEvent) => {
-  //   return calculateNormalizedPosition(
-  //     event.touches[0].clientX,
-  //     event.touches[0].clientY
-  //   );
-  // };
 
   const getNormalizedMousePosition = (event: React.MouseEvent) => {
     return calculateNormalizedPosition(event.clientX, event.clientY);
@@ -162,29 +152,45 @@ function CharacterMatrix() {
   };
 
   return (
-    <div
-      ref={ref}
-      onPointerDown={handleMouseDown}
-      //onTouchStart={handleTouchStart}
-      onPointerUp={handleMouseUp}
-      //onTouchEnd={handleTouchEnd}
-      onPointerMove={handleMouseMove}
-      //onTouchMove={handleTouchMove}
-      style={{
-        boxSizing: "border-box",
-        width: "100%",
-        height: "100%",
-        overflowX: "hidden",
-        fontFamily: "UniFont, UniFontUpper",
-        fontSize: `${FONT_SIZE}px`,
-        lineHeight: `${FONT_SIZE}px`,
-        userSelect: "none",
-        touchAction: "none",
-        textOverflow: "elipsis",
-        whiteSpace: "pre",
-        overflow: "hidden",
-      }}
-    ></div>
+    <>
+      <div
+        ref={ref}
+        onPointerDown={handleMouseDown}
+        onPointerUp={handleMouseUp}
+        onPointerMove={handleMouseMove}
+        style={{
+          boxSizing: "border-box",
+          width: "100%",
+          height: "100%",
+          overflowX: "hidden",
+          fontFamily: "UniFont, UniFontUpper",
+          fontSize: `${FONT_SIZE}px`,
+          lineHeight: `${FONT_SIZE}px`,
+          userSelect: "none",
+          touchAction: "none",
+          textOverflow: "elipsis",
+          whiteSpace: "pre",
+          overflow: "hidden",
+        }}
+      ></div>
+      {componentConfigs.map((config) => {
+        const Component = BlogPost;
+        if (config.type === "ImageComponent") {
+          // Handle each component type accordingly
+        }
+        return (
+          <Component
+            key={config.key}
+            width={config.width}
+            height={config.height}
+            top={config.top}
+            left={config.left}
+          >
+            {config.content && <config.content />}
+          </Component>
+        );
+      })}
+    </>
   );
 }
 

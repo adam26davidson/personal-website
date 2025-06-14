@@ -16,7 +16,6 @@ export class ContainerElement extends Element {
   private secondaryAxis = Y;
   private justifyContent: Alignment = "start";
   private alignItems: Alignment = "start";
-  private spacing: number = 0;
 
   constructor(config: ContainerElementConfig) {
     super(config);
@@ -89,6 +88,8 @@ export class ContainerElement extends Element {
   protected handleClick(): void {}
   protected handleMouseEnter(): void {}
   protected handleMouseLeave(): void {}
+  protected handleUnregisterWithView(): void {}
+  protected handleTransitionStart(): void {}
 
   private calculateContentSize() {
     const size = new IntPoint();

@@ -8,6 +8,8 @@ import { ProfessionalExperiencePage } from "./Pages/ProfessionalExperiencePage";
 import { AboutThisSitePage } from "./Pages/AboutThisSitePage";
 import { ContactPage } from "./Pages/ContactPage";
 import { MobileNavPage } from "./Pages/MobileNavPage";
+import { BlogPage } from "./Pages/BlogPage";
+import { BlogPostPage } from "./Pages/BlogPostPage";
 
 export type PageKey =
   | "about"
@@ -16,7 +18,9 @@ export type PageKey =
   | "title"
   | "professionalExperience"
   | "aboutThisSite"
-  | "mobileNav";
+  | "mobileNav"
+  | "blog"
+  | "blogPost";
 
 export const PAGE_ROUTES = {
   about: "/about/",
@@ -26,6 +30,8 @@ export const PAGE_ROUTES = {
   professionalExperience: "/professional-experience/",
   aboutThisSite: "/about-this-site/",
   mobileNav: "/mobile-nav/",
+  blog: "/blog/",
+  blogPost: "/blog-post/",
 };
 
 export const PAGE_KEYS: { [key: string]: PageKey } = {
@@ -36,6 +42,8 @@ export const PAGE_KEYS: { [key: string]: PageKey } = {
   "/contact/": "contact",
   "/": "title",
   "/mobile-nav/": "mobileNav",
+  "/blog/": "blog",
+  "/blog-post/": "blogPost",
 };
 
 class MatrixController {
@@ -55,6 +63,8 @@ class MatrixController {
       aboutThisSite: new AboutThisSitePage(view, this.setPage.bind(this)),
       contact: new ContactPage(view, this.setPage.bind(this)),
       mobileNav: new MobileNavPage(view, this.setPage.bind(this)),
+      blog: new BlogPage(view, this.setPage.bind(this)),
+      blogPost: new BlogPostPage(view, this.setPage.bind(this)),
     };
   }
 
@@ -81,13 +91,13 @@ class MatrixController {
     this.navigate = navigate;
   }
 
-  public setPage(toPage: PageKey) {
+  public setPage(toPage: PageKey, queryString: string = "") {
     if (this.pages[toPage] && toPage !== this.currentPage) {
       console.log("setting page", toPage);
       console.log("exiting page", this.currentPage);
       this.pages[this.currentPage].exitPage(() => {
         console.log("exited page", this.currentPage);
-        this.navigate(PAGE_ROUTES[toPage]);
+        this.navigate(`${PAGE_ROUTES[toPage]}${queryString}`);
         const page = this.pages[toPage];
         page.enterPage(
           this.currentPage === "title" || this.currentPage === "mobileNav"
