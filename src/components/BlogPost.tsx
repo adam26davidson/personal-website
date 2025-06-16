@@ -1,6 +1,7 @@
 import "katex/dist/katex.min.css";
 import "./BlogPost.css";
 import { MDXProvider } from "@mdx-js/react";
+import { FONT_SIZE, MOBILE_WIDTH } from "@/constants";
 
 export function BlogPost({
   width,
@@ -15,6 +16,7 @@ export function BlogPost({
   left: number;
   children?: React.ReactNode;
 }) {
+  const isMobile = window.innerWidth < (MOBILE_WIDTH * FONT_SIZE) / 2;
   return (
     <div
       className="fade-in-top normal-scrollbar prose prose-invert prose-slate max-w-none"
@@ -25,7 +27,7 @@ export function BlogPost({
         height: `${height}px`,
         width: `${width}px`,
         zIndex: 100,
-        padding: "40px",
+        padding: isMobile ? "20px" : "40px",
         overflowY: "auto",
       }}
     >

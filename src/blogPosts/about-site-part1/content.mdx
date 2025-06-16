@@ -13,31 +13,31 @@ Jun 14 2025
 
 Making this website was a lot of fun, so I thought I would share a bit about how the site works and some of the things I learned in the process of making it.
 
-This site is made from a grid of fixed size characters into which React components can be "embedded" (or really just overlaid).
+This site is made from a grid of fixed size characters into which React components can be "embedded".
 
 When you click or touch somewhere and drag around, there is a spring lattice simulation running in the background that is attracted upwards under your mouse. The distance that the masses in the lattice are displaced from their resting position at a certain point determines the character that is displayed there.
 
 The further the lattice is from zero under a character, the less similar the displayed character is to the original character. A machine learning descriptor called "Shape contexts" was used to precompute the similarity between characters. The use of Shape contexts to compute character similarity was inspired by the website [shapecatcher.com](https://shapecatcher.com), created by Benjamin Milde.
 
-In Part 1 I will explain what shape contexts are, and show how they were used in this website. A lot of this post will just be a paraphrase of [the original paper](https://people.eecs.berkeley.edu/~malik/papers/BMP-shape.pdf) by Serge Belongie, Jitendra Malik, and Jan Puzicha, with some interactive components, and more or less detail in some parts.
+In Part 1 I will explain what shape contexts are and show how they were used in this website. I'll also dive in to some of the details found in [the original paper on shape contexts](https://people.eecs.berkeley.edu/~malik/papers/BMP-shape.pdf) by Serge Belongie, Jitendra Malik, and Jan Puzicha, with some interactive components.
 
 ## What are "Shape contexts"
 
-The initial, vague idea I had for this site was that it would be built on a 2d matrix of fixed width characters, and when a user clicked somewhere it would cause the characters in the matrix to mutate to "similar looking" characters. In my head I had a vision of a sort of wave propagating out radially from the click, "corrupting" the characters as it went across the page to other characters that were just _slightly_ off.
+The initial idea I had for this site was that it would be built on a 2d matrix of fixed width characters, and when a user clicked somewhere it would cause the characters in the matrix to mutate to "similar looking" characters. In my head, I had a vision of a sort of wave propagating out radially from the click, "corrupting" the characters as it went across the page to other characters that were just _slightly_ off.
 
-I realized pretty quickly that figuring out what characters are similar to other characters is not as simple as it first sounds. (!)
+I quickly realized that figuring out what characters are similar to other characters is not as simple as it sounds. (!)
 
-In my research I found the aforementioned website [shapecatcher.com](https://shapecatcher.com), which there is a good chance you have already come across. On this site you can draw into a canvas and the site will (very accurately!) compute and display a list of the most similar looking Unicode characters. Exactly the type of thing I was looking for!
+In my research I came across [shapecatcher.com](https://shapecatcher.com). On this site, the user can draw into a canvas and the site will (very accurately!) compute and display a list of the most similar looking Unicode characters--exactly the capability I was looking for!
 
-The Creator of the shapecatcher site Benjamin Milde very helpfully has a little blurb on the site about how this similarity computation is done, where "Shape contexts" are introduced as:
+The Creator of the shapecatcher site, Benjamin Milde, includes a blurb on the site about how this similarity computation is done, where "Shape contexts" are introduced as:
 
 > a robust mathematical way of describing the concept of similarity between shapes, [a Shape context] is a feature descriptor first proposed by Serge Belongie and Jitendra Malik
 
-[The original paper on Shape contexts](https://people.eecs.berkeley.edu/~malik/papers/BMP-shape.pdf) shows us how to compute this shape context descriptor, and use it quantify how similar the shapes in two images are. This feature descriptor is handcrafted, old-school style, to capture structure in an image that corresponds to our intuitive understanding of "shape", and happens to work really well.
+[The original paper on Shape contexts](https://people.eecs.berkeley.edu/~malik/papers/BMP-shape.pdf) shows us how to compute this shape context descriptor, and use it quantify how similar the shapes in two images are. This feature descriptor is handcrafted, old-school style, to capture structure in an image that corresponds to our intuitive understanding of "shape".
 
 The general idea is that you get a sampling of points along the contours of the shape in your image, then at each point you compute the shape context at that point, which is a histogram that gives you a fuzzy picture of "where the rest of the points are" relative to that point. Given two shapes, you then can find the mapping between points in the two shapes that minimizes the differences between the contexts of mapped points. This gives you a mapping between points on the two characters that are similar to each other, in that the rest of their shape is distributed similarly in relation to each of the points. You can use this mapping to transform one shape onto the other, and see how much they line up. By factoring how much you had to transform a shape to get it to look like the other, and how closely the shape contexts align, you can get a measure of how similar the shapes are.
 
-This may sound confusing but it is actually pretty simple once you understand each of the pieces.
+This may sound complicated but it is actually pretty simple once you understand each of the pieces.
 
 ## Implementing Shape contexts
 
@@ -75,7 +75,7 @@ So now we do this for every point, meaning that if we had $n$ points, we now com
 
 ## Using Shape contexts to quantify similarity
 
-Ok, so let's say that we compiled a set of $n$ histograms for two different shapes. Now what? How do we use these things to actually see how similar two shapes (or in our case, rendered Unicode characters) are?
+Let's say that we compiled a set of $n$ histograms for two different shapes. Now what? How do we use these things to actually see how similar two shapes (or in our case, rendered Unicode characters) are?
 
 Let's assume we have two characters that are quite similar, say it is B and 8. then what we want to do is to ultimately compare the set of histograms of these two shapes in some way, and the way we choose to do this should result in a numerical value that suggests to us that the shapes of 'B' and '8' are indeed quite similar. But how to go about the nitty gritty of this?
 
@@ -83,7 +83,7 @@ Let's simplify things and think about a single sampled point. Imagine a point at
 
 If we were to try to compare some point in the middle of 8 to one in the top left of B, we would also find that the histograms are not very similar, giving an indication that the two shapes are not similar, which is not what we want.
 
-Ok, so from this it looks like all we need to do is to look for points that are at a similar relative position on each shape, and then see how different their histograms are. Meaning we would want to compare the histogram at a point at the top left of "B" to a point on the top left of "8", and a point at the middle of "B" to one in the middle of "8", etc. for all points. In essence, we need to find a mapping from all the sampled points on "B" to all the sampled points on "8", in this way.
+From here, it looks like all we need to do is to look for points that are at a similar relative position on each shape, and then see how different their histograms are. Meaning we would want to compare the histogram at a point at the top left of "B" to a point on the top left of "8", and a point at the middle of "B" to one in the middle of "8", etc. for all points. In essence, we need to find a mapping from all the sampled points on "B" to all the sampled points on "8", in this way.
 
 You may have realized that we've used some rather fuzzy terminology in the above paragraph. We need to be rigorous about what we mean by points having a 'similar relative position in the shape'. It may seem simple to see for us humans that the point at the top left of 8 corresponds to a point at the top left of B, but really, isn't this sort of a mini version of the problem we are trying to solve in the first place? To know where a point is 'in the context of the shape', you need to have some idea of what the shape is in the first place!
 
@@ -93,9 +93,9 @@ So it looks like we have a mini version of the problem embedded within the probl
 
 ### Finding a Mapping
 
-Fortunately, as you may have already guessed, the shape contexts we calculated contain exactly the information needed to find a mapping as described above. If we just compare the histograms for two points, this information is designed to capture the distribution of the shape relative to a point, so in other words, this is capturing "where the shape is relative to the point". What we said we needed to capture was "where the point is in the shape". And this is essentially the same information.
+Fortunately, the shape contexts we calculated contain exactly the information needed to find a mapping as described above! If we just compare the histograms for two points, this information is designed to capture the distribution of the shape relative to a point, so in other words, this is capturing "where the shape is relative to the point". What we said we needed to capture was "where the point is in the shape". This is essentially the same information.
 
-So now what we can do is find the mapping that minimizes the difference between the histograms (Shape contexts) of matched points. First, let's be more precise about what we mean by "the difference between the histograms". In the paper they lay out the Chi-squared test as the natural choice to compute the difference. Thus, the following formula can give us a measure of "how different" two histograms $h_1$ and $h_2$ are:
+Now what we can do is find the mapping that minimizes the difference between the histograms (Shape contexts) of matched points. First, let's be more precise about what we mean by "the difference between the histograms". In the paper Serge and Jitendra lay out the Chi-squared test as the natural choice to compute the difference. Thus, the following formula can give us a measure of "how different" two histograms $h_1$ and $h_2$ are:
 
 $$
 \frac{1}{2} \sum_{k=1}^{K} \frac{[h_1(k) - h_2(k)]^2}{h_1(k) + h_2(k)}
@@ -153,7 +153,7 @@ $$
 p_{iy}' = c p_{ix} + d p_{iy} + o_y
 $$
 
-so now if you substitute this into the error expression it looks like this:
+If you substitute this into the error expression it looks like this:
 
 $$
 E = \sum_{i=1}^{n} (\textcolor{lightgreen}{a} p_{ix} + \textcolor{lightgreen}{b} p_{iy} + \textcolor{lightgreen}{o_x} - q_{ix})^2
@@ -226,7 +226,7 @@ $$
 E = \operatorname{trace}((\tilde{P}\textcolor{lightgreen}{M} - Q)^T(\tilde{P}\textcolor{lightgreen}{M} - Q))
 $$
 
-$\operatorname{trace}$ here just adds up the diagonal elements in a square matrix, so we are ignoring the top right and bottom left of the $2 \times 2$ matrix. Here is what that matrix will look like more concretely:
+$\operatorname{trace}$ here just adds up the diagonal elements in a square matrix, which means we are ignoring the top right and bottom left entries of the $2 \times 2$ matrix. Here is what that matrix will look like more concretely:
 
 $$
 \begin{bmatrix}
@@ -297,7 +297,7 @@ $$
 \boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \boldsymbol{q}_x = (\boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \boldsymbol{q}_x)^T = \boldsymbol{q}_x^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}
 $$
 
-so now we have:
+Now we have:
 
 $$
 E_x = \boldsymbol{\textcolor{lightgreen}{m_x}}^T \tilde{P}^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}}  - 2 \boldsymbol{q}_x^T \tilde{P} \boldsymbol{\textcolor{lightgreen}{m_x}} + \boldsymbol{q}_x^T \boldsymbol{q}_x
@@ -325,7 +325,7 @@ $$
 \boldsymbol{\textcolor{lightgreen}{m_x}} = (\tilde{P}^T \tilde{P})^{-1} \tilde{P}^T \boldsymbol{q}_x
 $$
 
-The expression $(\tilde{P}^T \tilde{P})^{-1} \tilde{P}^T$ actually has a name. It's called the pseudo-inverse of $\tilde{P}$, denoted $\tilde{P}^+$. To give you an idea of why this is called a pseudo-inverse, if $\tilde{P}$, were a square, full-rank matrix, then its pseudo-inverse would be the same as its normal inverse, but this is not the case for us. So we have the very satisfying result that:
+The expression $(\tilde{P}^T \tilde{P})^{-1} \tilde{P}^T$ actually has a name. It's called the pseudo-inverse of $\tilde{P}$, denoted $\tilde{P}^+$. To give you an idea of why this is called a pseudo-inverse, if $\tilde{P}$, were a square, full-rank matrix, then its pseudo-inverse would be the same as its normal inverse, but this is not the case for us. We now have the very satisfying result that:
 
 $$
 \boldsymbol{\textcolor{lightgreen}{m_x}} = \tilde{P}^+ \boldsymbol{q}_x
@@ -349,7 +349,7 @@ WOW that's satisfying! - We have a closed form solution!
 
 ## The final similarity calculation
 
-So now that we have found the best affine transformation from one shape to the other, we can measure the intensity of this transformation, and add in a term for this in our similarity index. We can also incorporate the minimum Error $E$ found in the best mapping, to give us a measure of how successfully we were able to line up the two shapes.
+Once we have found the best affine transformation from one shape to the other, we can measure the intensity of this transformation, and add in a term for this in our similarity index. We can also incorporate the minimum Error $E$ found in the best mapping, to give us a measure of how successfully we were able to line up the two shapes.
 
 We only found the mapping from shape 1 to shape 2, but you could also do it the other way as well (mapping from shape 2 to shape 1) to get an even more accurate value, but I just did one of these and got fairly good results.
 
@@ -375,8 +375,12 @@ The way that I applied this measure of shape similarity was to precompute a list
 
 One challenge of shape contexts is that you don't end up with some embedding of shape that ends up in some shared embedding space, where you could cluster similar shapes for example. By contrast if you took the outputs of one of the later layers in CNN for image recognition, for example, then you would have some abstracted representation for each character, all embedded in the same vector space, allowing you to do k-clustering or other things to speed up the process of trying to find the top 100 most similar shapes. Of course, the features encoded in these embeddings could be all sorts of things, and are not guaranteed to line up perfectly with what we would consider "shape".
 
-Unfortunately the comparisons using shape contexts are not like this, you have to find a mapping between each pair of shapes in order to get a measure of similarity - instead of just a distance between vectors.
+Unfortunately, the comparisons using shape contexts are not like this, you have to find a mapping between each pair of shapes in order to get a measure of similarity - instead of just a distance between vectors.
 
 One thing you could do would be to first rule out a bunch of shapes using the neural net, then sort the remaining characters using shape contexts.
 
-Anyways, Thank you so much for reading this far in this post if you have! I hope to write a part 2 soon, going into the spring simulation, so keep an eye out if that sounds interesting to you
+## In Conclusion
+
+I found it interesting to dive in to this slightly older image processing technique. In the age of neural networks, LLMs and deep learning, it can be easy to forget how effective hand crafted methods can be in well defined tasks. Although there are interesting developments happening in the ability to analyze the parameters in pre-trained networks to see how they work (a task called interpretability), they are largely still black boxes. Hand crafted methods are cool to me in that they usually provide some amount of insight into the nature of the problem itself.
+
+Thank you so much for reading this far in this post! I had fun writing it and learned a lot along the way.
