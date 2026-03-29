@@ -6,18 +6,22 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "char-matrix": ["../char-matrix/src/index.ts"]
-    }
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true
   },
-  "include": ["src"]
+  "include": ["src", "src/**/*.json"],
+  "references": [
+    { "path": "../char-matrix" }
+  ]
 }

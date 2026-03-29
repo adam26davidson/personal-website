@@ -29,7 +29,7 @@ export abstract class ElementInteraction extends ElementDrawing {
   public handleMouseMove(p: RealPoint): boolean {
     // Handle scrollbar drag
     if (this.isDraggingScrollbar) {
-      this.updateScrollbarDrag(p.y);
+      this.updateScrollbarDrag(p.getY());
       return true;
     }
 
@@ -73,8 +73,8 @@ export abstract class ElementInteraction extends ElementDrawing {
       this.pointIsInside(p)
     ) {
       // Check scrollbar thumb click before delegating to children
-      if (this.scrollable && this.isPointOnScrollbarThumb(p.x, p.y)) {
-        this.startScrollbarDrag(p.y);
+      if (this.scrollable && this.isPointOnScrollbarThumb(p.getX(), p.getY())) {
+        this.startScrollbarDrag(p.getY());
         return;
       }
 
@@ -115,6 +115,6 @@ export abstract class ElementInteraction extends ElementDrawing {
   }
 
   private pointIsInside(p: RealPoint): boolean {
-    return AXES.every((a) => p[a] >= 0 && p[a] < this.size[a]);
+    return AXES.every((a) => p.get(a) >= 0 && p.get(a) < this.size.get(a));
   }
 }

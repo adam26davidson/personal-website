@@ -12,6 +12,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
+    "build:packages": "npm run build --workspace=packages/char-matrix && npm run build --workspace=packages/char-matrix-react && npm run build --workspace=packages/char-matrix-fx",
+    "clean:packages": "npm run clean --workspaces",
     "generate:posts": "node generatePostIndex.mjs"
   },
   "dependencies": {
