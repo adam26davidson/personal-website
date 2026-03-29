@@ -34,7 +34,7 @@ export abstract class ElementInteraction extends ElementDrawing {
         let childrenDeterminingMouse = false;
         this.children.forEach((c) => {
           const childIsDeterminingMouse = c.handleMouseMove(
-            p.subtract(c.getOffset())
+            p.subtract(c.getOffset()).subtract(this.scrollOffset)
           );
           if (childIsDeterminingMouse) {
             childrenDeterminingMouse = true;
@@ -69,9 +69,28 @@ export abstract class ElementInteraction extends ElementDrawing {
       this.onclick && this.onclick();
       this.handleClick();
       this.children.forEach((c) =>
-        c.handleMouseDown(p.subtract(c.getOffset()))
+        c.handleMouseDown(p.subtract(c.getOffset()).subtract(this.scrollOffset))
       );
     }
+  }
+
+  public handleWheel(p: RealPoint, delta: number): boolean {
+    if (this.stage !== "main" && this.stage !== "entering") return false;
+    if (!this.pointIsInside(p)) return false;
+
+    // Try children first (innermost scrollable element wins)
+    for (const child of this.children) {
+      if (child.handleWheel(p.subtract(child.getOffset()).subtract(this.scrollOffset), delta)) {
+        return true;
+      }
+    }
+
+    // Handle locally if scrollable
+    if (this.scrollable) {
+      return this.applyScroll(delta);
+    }
+
+    return false;
   }
 
   private pointIsInside(p: RealPoint): boolean {

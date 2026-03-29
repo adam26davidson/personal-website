@@ -12,7 +12,6 @@ export { TransitionSequence } from "./Element/TransitionSequence";
 
 // Interfaces
 export type { RenderTarget } from "./interfaces/RenderTarget";
-export type { ScrollHandler, ScrollUpdateConfig } from "./interfaces/ScrollHandler";
 export type { ElementAnimationHandler } from "./interfaces/ElementAnimationHandler";
 export type { SurfaceTransform } from "./interfaces/SurfaceTransform";
 

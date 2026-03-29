@@ -135,6 +135,19 @@ function CharacterMatrix() {
     matrixView.handleMouseMove(x, y);
   };
 
+  // Wheel handler registered via ref to allow preventDefault (React onWheel is passive)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const [x, y] = calculateNormalizedPosition(event.clientX, event.clientY);
+      matrixView.handleWheel(x, y, event.deltaY);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
   const getNormalizedMousePosition = (event: React.MouseEvent) => {
     return calculateNormalizedPosition(event.clientX, event.clientY);
   };

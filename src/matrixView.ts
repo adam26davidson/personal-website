@@ -7,6 +7,7 @@ import {
   Y,
   RealPoint,
   DEFAULT_BACKGROUND_CHAR,
+  FONT_SIZE,
   MOBILE_WIDTH,
   NUM_PARTICLES,
   NUM_PARTICLES_MOBILE,
@@ -26,7 +27,8 @@ type Event =
       position: { x: number; y: number };
     }
   | { type: "mouseUp" }
-  | { type: "resize"; position: { x: number; y: number } };
+  | { type: "resize"; position: { x: number; y: number } }
+  | { type: "wheel"; position: { x: number; y: number }; deltaY: number };
 
 type MouseVoveEvent = { x: number; y: number };
 
@@ -251,6 +253,15 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
     this.eventQueue.push(event);
   }
 
+  public handleWheel(x: number, y: number, deltaY: number) {
+    const event: Event = {
+      type: "wheel",
+      position: { x, y },
+      deltaY,
+    };
+    this.eventQueue.push(event);
+  }
+
   private processEvents() {
     if (this.mouseMoveEvent) {
       this.processMouseMove(this.mouseMoveEvent.x, this.mouseMoveEvent.y);
@@ -267,6 +278,9 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
           break;
         case "resize":
           this.processResize(event.position.x, event.position.y);
+          break;
+        case "wheel":
+          this.processWheel(event.position.x, event.position.y, event.deltaY);
           break;
       }
     }
@@ -293,6 +307,12 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
     }
     const p = new RealPoint(x * this.size.getX(), y * this.size.getY());
     this.rootElement.handleMouseMove(p);
+  }
+
+  private processWheel(x: number, y: number, deltaY: number) {
+    const charDelta = deltaY / FONT_SIZE;
+    const p = new RealPoint(x * this.size.getX(), y * this.size.getY());
+    this.rootElement.handleWheel(p, charDelta);
   }
 
   private processResize(x: number, y: number) {

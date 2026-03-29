@@ -34,7 +34,6 @@ export interface ElementConfig {
   xOffset?: number;
   yOffset?: number;
   animationHandler?: import("../interfaces/ElementAnimationHandler").ElementAnimationHandler;
-  scrollHandler?: import("../interfaces/ScrollHandler").ScrollHandler;
   entranceTiming?: "parallel" | "series";
   exitTiming?: "parallel" | "series";
 }

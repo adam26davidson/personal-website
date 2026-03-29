@@ -131,7 +131,6 @@ export abstract class Element extends ElementInteraction {
     this.view.unregisterElement(this);
     this.isOnView = false;
     console.log("unregistering element", this.key);
-    this.destroyScrollHandler();
     this.children.forEach((child) => child.unregisterWithView());
   }
 
