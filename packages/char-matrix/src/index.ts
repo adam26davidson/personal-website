@@ -6,8 +6,6 @@ export { ContainerElement } from "./Element/ContainerElement";
 export type { ContainerElementConfig, Alignment } from "./Element/ContainerElement";
 export { default as TextElement } from "./Element/TextElement";
 export type { TextElementConfig, HoverTextTransform } from "./Element/TextElement";
-export { HeaderElement } from "./Element/HeaderElement";
-export { ParagraphElement } from "./Element/ParagraphElement";
 export { TransitionSequence } from "./Element/TransitionSequence";
 
 // Interfaces

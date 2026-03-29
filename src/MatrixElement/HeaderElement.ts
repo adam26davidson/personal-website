@@ -1,6 +1,5 @@
-import { DOT_CHAR } from "../constants";
-import TextElement from "./TextElement";
-import { RenderTarget } from "../interfaces/RenderTarget";
+import { DOT_CHAR, TextElement } from "char-matrix";
+import type { RenderTarget } from "char-matrix";
 
 const MIN_WIDTH = 20;
 
