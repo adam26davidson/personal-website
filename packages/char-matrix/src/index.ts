@@ -37,3 +37,6 @@ export {
 // Utilities
 export { charsToPixelsX, charsToPixelsY, toBold, toBoldChar, toNotBoldChar, getPostIdFromTitle } from "./utils/MiscUtils";
 export { throttledWarn } from "./utils/Logging";
+
+// Octant
+export { octantChar, octantFromGrid, octantFromPixels, OCTANT_LEFT, OCTANT_RIGHT, OCTANT_ROW } from "./utils/Octant";

@@ -27,6 +27,12 @@ export abstract class ElementInteraction extends ElementDrawing {
   }
 
   public handleMouseMove(p: RealPoint): boolean {
+    // Handle scrollbar drag
+    if (this.isDraggingScrollbar) {
+      this.updateScrollbarDrag(p.y);
+      return true;
+    }
+
     let determiningMouse = false;
     if (this.stage === "main" || this.stage === "entering") {
       const pointIsInside = this.pointIsInside(p);
@@ -66,12 +72,27 @@ export abstract class ElementInteraction extends ElementDrawing {
       (this.stage === "main" || this.stage === "entering") &&
       this.pointIsInside(p)
     ) {
+      // Check scrollbar thumb click before delegating to children
+      if (this.scrollable && this.isPointOnScrollbarThumb(p.x, p.y)) {
+        this.startScrollbarDrag(p.y);
+        return;
+      }
+
       this.onclick && this.onclick();
       this.handleClick();
       this.children.forEach((c) =>
         c.handleMouseDown(p.subtract(c.getOffset()).subtract(this.scrollOffset))
       );
     }
+  }
+
+  public handleMouseUp(p: RealPoint): void {
+    if (this.isDraggingScrollbar) {
+      this.stopScrollbarDrag();
+    }
+    this.children.forEach((c) =>
+      c.handleMouseUp(p.subtract(c.getOffset()).subtract(this.scrollOffset))
+    );
   }
 
   public handleWheel(p: RealPoint, delta: number): boolean {

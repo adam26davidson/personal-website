@@ -290,6 +290,8 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
   private processMouseUp() {
     this.mouseDown = false;
     this.springLattice.setAttractorOff();
+    const p = new RealPoint(this.size.getX() / 2, this.size.getY() / 2);
+    this.rootElement.handleMouseUp(p);
   }
 
   private processMouseDown(x: number, y: number) {
