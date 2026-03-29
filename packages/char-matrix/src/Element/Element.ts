@@ -139,7 +139,9 @@ export abstract class Element extends ElementInteraction {
   public runAnimationStep(offset: IntPoint): void {
     const fullOffset = offset.add(this.scrollOffset);
     if (this.animationHandler) {
-      this.animationHandler.runAnimationStep(fullOffset);
+      // Animation covers the element's own screen area (no scroll offset).
+      // Scroll only shifts children, not the element's border/background/animation.
+      this.animationHandler.runAnimationStep(offset);
     }
     this.children.forEach((child) =>
       child.runAnimationStep(fullOffset.add(child.getOffset()))
