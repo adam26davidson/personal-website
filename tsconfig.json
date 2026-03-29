@@ -1,17 +1,16 @@
 {
   "files": [],
   "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
-    }
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "char-matrix": ["./packages/char-matrix/src/index.ts"],
+      "char-matrix-react": ["./packages/char-matrix-react/src/index.ts"],
+      "char-matrix-fx": ["./packages/char-matrix-fx/src/index.ts"]
     },
     "types": ["eslint-plugin-mdx"]
   }

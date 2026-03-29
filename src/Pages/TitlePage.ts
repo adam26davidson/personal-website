@@ -1,11 +1,9 @@
-import { ContainerElement } from "../MatrixElement/ContainerElement";
-import { Element } from "../MatrixElement/Element";
+import { X, Y, ContainerElement, Element } from "char-matrix";
 import { LinkElement } from "../MatrixElement/LinkElement";
 import {
   LargeTitleElement,
   MediumTitleElement,
 } from "../MatrixElement/TitleElement";
-import { X, Y } from "../UtilityTypes/Axes";
 import { LINKS, Page } from "./Page";
 
 const DOT_CHAR = "\u00b7";

@@ -1,10 +1,8 @@
 import { ContentPage } from "./ContentPage";
 import aboutText from "./about.txt?raw";
-import { ParagraphElement } from "../MatrixElement/ParagraphElement";
-import { Element } from "../MatrixElement/Element";
-import { HeaderElement } from "../MatrixElement/HeaderElement";
-import { LinkElement } from "../MatrixElement/LinkElement";
+import { ParagraphElement, Element, HeaderElement } from "char-matrix";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
+import { LinkElement } from "../MatrixElement/LinkElement";
 
 export class AboutPage extends ContentPage {
   protected getContent(): Element {

@@ -1,12 +1,7 @@
 import { ContentPage } from "./ContentPage";
-import { Element } from "../MatrixElement/Element";
-import { HeaderElement } from "../MatrixElement/HeaderElement";
+import { DOT_CHAR, SPACE_CHAR, toBold, Element, HeaderElement, ContainerElement, TextElement } from "char-matrix";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
-import { ContainerElement } from "../MatrixElement/ContainerElement";
-import { DOT_CHAR, SPACE_CHAR } from "../constants";
 import { BLOG_POST_LIST } from "../blogPosts/post-list";
-import { toBold } from "../Utilities/MiscUtils";
-import TextElement from "../MatrixElement/TextElement";
 
 export class BlogPage extends ContentPage {
   protected getContent(): Element {

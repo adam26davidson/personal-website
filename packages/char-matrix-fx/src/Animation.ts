@@ -1,8 +1,6 @@
-import { Element } from "./Element";
-import TOP_SIMILAR from "../topSimilar";
-import MatrixView from "../matrixView";
-import { IntPoint } from "../UtilityTypes/IntPoint";
-import { DEFAULT_BACKGROUND_CHAR } from "../constants";
+import { Element, IntPoint, DEFAULT_BACKGROUND_CHAR } from "char-matrix";
+import type { RenderTarget } from "char-matrix";
+import TOP_SIMILAR from "./topSimilar";
 
 export type AnimationConfig =
   | {
@@ -35,11 +33,11 @@ export abstract class Animation {
   protected abstract updateState(): void;
 
   protected element: Element;
-  protected view: MatrixView;
+  protected view: RenderTarget;
   protected backgroundChar: string = DEFAULT_BACKGROUND_CHAR;
   protected onComplete: () => void = () => {};
 
-  constructor(element: Element, view: MatrixView, onComplete: () => void) {
+  constructor(element: Element, view: RenderTarget, onComplete: () => void) {
     this.element = element;
     this.view = view;
     this.onComplete = onComplete;
@@ -47,7 +45,7 @@ export abstract class Animation {
 
   static createAnimation(
     element: Element,
-    view: MatrixView,
+    view: RenderTarget,
     config: AnimationConfig,
     onComplete: () => void
   ): Animation {
@@ -111,7 +109,7 @@ export abstract class HeadBasedAnimation extends Animation {
 
   constructor(
     element: Element,
-    view: MatrixView,
+    view: RenderTarget,
     config: {
       tailLength: number;
       randomizationRange: number;
@@ -205,7 +203,7 @@ export class DiagonalSwipeAnimation extends HeadBasedAnimation {
 
   constructor(
     element: Element,
-    view: MatrixView,
+    view: RenderTarget,
     config: DiagonalSwipeAnimationConfig,
     onComplete: () => void = () => {}
   ) {

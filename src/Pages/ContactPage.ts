@@ -1,8 +1,7 @@
 import { ContentPage } from "./ContentPage";
-import { Element } from "../MatrixElement/Element";
-import { HeaderElement } from "../MatrixElement/HeaderElement";
-import { LinkElement } from "../MatrixElement/LinkElement";
+import { Element, HeaderElement } from "char-matrix";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
+import { LinkElement } from "../MatrixElement/LinkElement";
 
 export class ContactPage extends ContentPage {
   protected getContent(): Element {

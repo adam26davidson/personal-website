@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { SpringLattice } from "./springLattice";
-import MatrixView from "./matrixView";
-import _ from "lodash";
-import { useLocation, useNavigate } from "react-router";
 import {
+  IntPoint,
   FONT_SIZE,
   MOBILE_WIDTH,
   NUM_PARTICLES,
   NUM_PARTICLES_MOBILE,
-} from "./constants";
-import { IntPoint } from "./UtilityTypes/IntPoint";
-import { ReactNodeConfig } from "./UtilityTypes/ReactNodeConfig";
+} from "char-matrix";
+import { ReactNodeConfig } from "char-matrix-react";
+import { SpringLattice, SpringLatticeSurfaceTransform } from "char-matrix-fx";
+import MatrixView from "./matrixView";
+import _ from "lodash";
+import { useLocation, useNavigate } from "react-router";
 import { BlogPost } from "./components/BlogPost";
 
 const matrixView = new MatrixView();
 const lattice = new SpringLattice();
+matrixView.addSurfaceTransform(new SpringLatticeSurfaceTransform(lattice));
 
 function CharacterMatrix() {
   const ref = useRef<HTMLDivElement>(null);

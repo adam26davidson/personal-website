@@ -1,10 +1,32 @@
-import { DOT_CHAR } from "../constants";
-import MatrixView from "../matrixView";
-import { ContainerElement } from "./ContainerElement";
-import { Y } from "../UtilityTypes/Axes";
+import { DOT_CHAR, Y, ContainerElement } from "char-matrix";
+import type { RenderTarget } from "char-matrix";
+import { DefaultAnimationHandler } from "char-matrix-fx";
 
 export class ContentContainerElement extends ContainerElement {
-  constructor(key: string, view: MatrixView, noYPadding?: boolean) {
+  constructor(key: string, view: RenderTarget, noYPadding?: boolean) {
+    const handler = new DefaultAnimationHandler(null, view, {
+      entrance: {
+        type: "diagonalSwipe",
+        config: {
+          slant: 2,
+          tailLength: view.getIsMobile() ? 20 : 40,
+          headSpeed: view.getIsMobile() ? 3 : 5,
+          randomizationRange: 5,
+          use: "entrance",
+        },
+      },
+      exit: {
+        type: "diagonalSwipe",
+        config: {
+          slant: 2,
+          tailLength: view.getIsMobile() ? 20 : 40,
+          headSpeed: view.getIsMobile() ? 3 : 5,
+          randomizationRange: 5,
+          use: "exit",
+        },
+      },
+    });
+
     super({
       key,
       view,
@@ -19,26 +41,9 @@ export class ContentContainerElement extends ContainerElement {
       spacing: 1,
       paddingY: noYPadding ? 0 : 1,
       backgroundChar: DOT_CHAR,
-      entranceAnimationConfig: {
-        type: "diagonalSwipe",
-        config: {
-          slant: 2,
-          tailLength: view.getIsMobile() ? 20 : 40,
-          headSpeed: view.getIsMobile() ? 3 : 5,
-          randomizationRange: 5,
-          use: "entrance",
-        },
-      },
-      exitAnimationConfig: {
-        type: "diagonalSwipe",
-        config: {
-          slant: 2,
-          tailLength: view.getIsMobile() ? 20 : 40,
-          headSpeed: view.getIsMobile() ? 3 : 5,
-          randomizationRange: 5,
-          use: "exit",
-        },
-      },
+      animationHandler: handler,
     });
+
+    handler.setElement(this);
   }
 }

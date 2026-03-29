@@ -1,5 +1,5 @@
 import { SPACE_CHAR } from "../constants";
-import { throttledWarn } from "../Utilities/Logging";
+import { throttledWarn } from "../utils/Logging";
 import { IntPoint, ZERO_POINT } from "./IntPoint";
 
 export class CharMatrix {
