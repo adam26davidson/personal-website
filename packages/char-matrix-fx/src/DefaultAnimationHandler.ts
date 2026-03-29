@@ -1,6 +1,7 @@
 import { Element, IntPoint } from "char-matrix";
 import type { ElementAnimationHandler, RenderTarget } from "char-matrix";
-import { Animation, AnimationConfig } from "./Animation";
+import { type Animation, type AnimationConfig } from "./Animation";
+import { createAnimation } from "./createAnimation";
 
 export interface AnimationConfigs {
   entrance?: AnimationConfig;
@@ -41,7 +42,7 @@ export class DefaultAnimationHandler implements ElementAnimationHandler {
     const config = this.getConfig(type);
     if (!config || !this.element) return false;
 
-    this.animation = Animation.createAnimation(
+    this.animation = createAnimation(
       this.element,
       this.view,
       config,

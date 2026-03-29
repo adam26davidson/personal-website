@@ -1,10 +1,5 @@
 // Animation system
-export {
-  Animation,
-  HeadBasedAnimation,
-  DiagonalSwipeAnimation,
-  RowTracerAnimation,
-} from "./Animation";
+export { Animation } from "./Animation";
 export type {
   AnimationConfig,
   AnimationUse,
@@ -12,6 +7,10 @@ export type {
   RowTracerAnimationConfig,
   DiagonalSwipeAnimationConfig,
 } from "./Animation";
+export { HeadBasedAnimation } from "./HeadBasedAnimation";
+export { DiagonalSwipeAnimation } from "./DiagonalSwipeAnimation";
+export { RowTracerAnimation } from "./RowTracerAnimation";
+export { createAnimation } from "./createAnimation";
 
 // Animation handler
 export { DefaultAnimationHandler } from "./DefaultAnimationHandler";
