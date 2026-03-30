@@ -1,7 +1,7 @@
 import "katex/dist/katex.min.css";
 import "./BlogPost.css";
 import { MDXProvider } from "@mdx-js/react";
-import { FONT_SIZE, MOBILE_WIDTH } from "@/constants";
+import { FONT_SIZE, MOBILE_WIDTH } from "@adam26davidson/char-matrix";
 
 export function BlogPost({
   width,

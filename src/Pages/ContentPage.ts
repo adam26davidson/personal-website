@@ -1,9 +1,6 @@
-import { DOT_CHAR } from "../constants";
-import { ContainerElement } from "../MatrixElement/ContainerElement";
+import { DOT_CHAR, X, Y, ContainerElement, Element } from "@adam26davidson/char-matrix";
 import { LinkElement } from "../MatrixElement/LinkElement";
-import { Element } from "../MatrixElement/Element";
 import { Page, LINKS } from "./Page";
-import { X, Y } from "../UtilityTypes/Axes";
 import {
   MediumTitleElement,
   SmallTitleElement,

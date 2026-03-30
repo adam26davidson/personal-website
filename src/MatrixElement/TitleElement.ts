@@ -1,6 +1,6 @@
-import { SPACE_CHAR } from "../constants";
-import MatrixView from "../matrixView";
-import TextElement from "./TextElement";
+import { SPACE_CHAR, TextElement } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
+import { DefaultAnimationHandler } from "@adam26davidson/char-matrix-fx";
 
 const largeTitleText =
   "  __   ____   __   _  _    ____   __   _  _  __  ____  ____   __   __ _  \n" +
@@ -14,15 +14,9 @@ const mediumTitleText =
   "🬖🬏🬚🬏🬖🬏🬚🬖🬓\n" + "🬆🬄🬌🬀🬆🬄🬄 🬄\n" + "🬚🬏🬖🬏🬓🬓🬩🬃🬚🬏🬖🬃🬚🬓🬱🬦\n" + "🬌🬀🬆🬄🬈🬀🬍🬃🬌🬀🬍🬀🬌🬄🬄🬊";
 
 export class LargeTitleElement extends TextElement {
-  constructor(view: MatrixView) {
-    super({
-      key: "largeTitle",
-      view,
-      text: largeTitleText,
-      bordered: true,
-      backgroundChar: SPACE_CHAR,
-      paddingX: 1,
-      entranceAnimationConfig: {
+  constructor(view: RenderTarget) {
+    const handler = new DefaultAnimationHandler(null, view, {
+      entrance: {
         type: "rowTracer",
         config: {
           tailLength: 40,
@@ -31,7 +25,7 @@ export class LargeTitleElement extends TextElement {
           use: "entrance",
         },
       },
-      exitAnimationConfig: {
+      exit: {
         type: "diagonalSwipe",
         config: {
           tailLength: 30,
@@ -42,20 +36,23 @@ export class LargeTitleElement extends TextElement {
         },
       },
     });
+    super({
+      key: "largeTitle",
+      view,
+      text: largeTitleText,
+      bordered: true,
+      backgroundChar: SPACE_CHAR,
+      paddingX: 1,
+      animationHandler: handler,
+    });
+    handler.setElement(this);
   }
 }
 
 export class MediumTitleElement extends TextElement {
-  constructor(view: MatrixView) {
-    super({
-      key: "mediumTitle",
-      view,
-      text: mediumTitleText,
-      bordered: true,
-      paddingX: 1,
-      backgroundChar: SPACE_CHAR,
-      cursor: "pointer",
-      entranceAnimationConfig: {
+  constructor(view: RenderTarget) {
+    const handler = new DefaultAnimationHandler(null, view, {
+      entrance: {
         type: "rowTracer",
         config: {
           tailLength: 20,
@@ -64,7 +61,7 @@ export class MediumTitleElement extends TextElement {
           use: "entrance",
         },
       },
-      exitAnimationConfig: {
+      exit: {
         type: "diagonalSwipe",
         config: {
           tailLength: 20,
@@ -75,20 +72,24 @@ export class MediumTitleElement extends TextElement {
         },
       },
     });
-  }
-}
-
-export class SmallTitleElement extends TextElement {
-  constructor(view: MatrixView) {
     super({
-      key: "smallTitle",
+      key: "mediumTitle",
       view,
-      text: smallTitleText,
+      text: mediumTitleText,
       bordered: true,
       paddingX: 1,
       backgroundChar: SPACE_CHAR,
       cursor: "pointer",
-      entranceAnimationConfig: {
+      animationHandler: handler,
+    });
+    handler.setElement(this);
+  }
+}
+
+export class SmallTitleElement extends TextElement {
+  constructor(view: RenderTarget) {
+    const handler = new DefaultAnimationHandler(null, view, {
+      entrance: {
         type: "rowTracer",
         config: {
           tailLength: 10,
@@ -97,7 +98,7 @@ export class SmallTitleElement extends TextElement {
           use: "entrance",
         },
       },
-      exitAnimationConfig: {
+      exit: {
         type: "diagonalSwipe",
         config: {
           tailLength: 10,
@@ -108,5 +109,16 @@ export class SmallTitleElement extends TextElement {
         },
       },
     });
+    super({
+      key: "smallTitle",
+      view,
+      text: smallTitleText,
+      bordered: true,
+      paddingX: 1,
+      backgroundChar: SPACE_CHAR,
+      cursor: "pointer",
+      animationHandler: handler,
+    });
+    handler.setElement(this);
   }
 }

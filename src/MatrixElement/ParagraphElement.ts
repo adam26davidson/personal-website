@@ -1,13 +1,12 @@
-import { SPACE_CHAR } from "../constants";
-import TextElement from "./TextElement";
-import MatrixView from "../matrixView";
+import { SPACE_CHAR, TextElement } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
 
 export class ParagraphElement extends TextElement {
   constructor(
     key: string,
     text: string,
     relativeWidth: number,
-    view: MatrixView
+    view: RenderTarget
   ) {
     super({
       key,

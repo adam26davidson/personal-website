@@ -1,7 +1,6 @@
-import { AnimationConfig, AnimationUse } from "./Animation";
-import TextElement from "./TextElement";
-import MatrixView from "../matrixView";
-import { SPACE_CHAR } from "../constants";
+import { SPACE_CHAR, TextElement } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
+import { DefaultAnimationHandler, AnimationConfig, AnimationUse } from "@adam26davidson/char-matrix-fx";
 
 const createLinkAnimationConfigMobile = (
   use: AnimationUse
@@ -41,13 +40,30 @@ const createLinkAnimationConfig = (
   };
 };
 
+function createLinkAnimationHandler(
+  view: RenderTarget,
+  animate: boolean
+): DefaultAnimationHandler {
+  return new DefaultAnimationHandler(null, view, {
+    entrance: animate
+      ? createLinkAnimationConfig("entrance", view.getIsMobile())
+      : undefined,
+    exit: animate
+      ? createLinkAnimationConfig("exit", view.getIsMobile())
+      : undefined,
+    mouseEnter: createLinkAnimationConfig("interaction", view.getIsMobile()),
+    mouseExit: createLinkAnimationConfig("interaction", view.getIsMobile()),
+  });
+}
+
 export class ButtonStyleLinkElement extends TextElement {
   constructor(
     key: string,
     title: string,
-    view: MatrixView,
+    view: RenderTarget,
     animate: boolean = true
   ) {
+    const handler = createLinkAnimationHandler(view, animate);
     super({
       key,
       view,
@@ -55,23 +71,11 @@ export class ButtonStyleLinkElement extends TextElement {
       bordered: true,
       paddingX: 1,
       backgroundChar: SPACE_CHAR,
-      entranceAnimationConfig: animate
-        ? createLinkAnimationConfig("entrance", view.getIsMobile())
-        : undefined,
-      mouseEnterAnimationConfig: createLinkAnimationConfig(
-        "interaction",
-        view.getIsMobile()
-      ),
-      mouseExitAnimationConfig: createLinkAnimationConfig(
-        "interaction",
-        view.getIsMobile()
-      ),
-      exitAnimationConfig: animate
-        ? createLinkAnimationConfig("exit", view.getIsMobile())
-        : undefined,
       hoverTransform: "bold",
       cursor: "pointer",
+      animationHandler: handler,
     });
+    handler.setElement(this);
   }
 }
 
@@ -79,9 +83,10 @@ export class LinkElement extends TextElement {
   constructor(
     key: string,
     title: string,
-    view: MatrixView,
+    view: RenderTarget,
     animate: boolean = true
   ) {
+    const handler = createLinkAnimationHandler(view, animate);
     super({
       key,
       view,
@@ -89,22 +94,10 @@ export class LinkElement extends TextElement {
       bordered: view.getIsMobile(),
       paddingX: view.getIsMobile() ? 1 : 0,
       backgroundChar: SPACE_CHAR,
-      entranceAnimationConfig: animate
-        ? createLinkAnimationConfig("entrance", view.getIsMobile())
-        : undefined,
-      mouseEnterAnimationConfig: createLinkAnimationConfig(
-        "interaction",
-        view.getIsMobile()
-      ),
-      mouseExitAnimationConfig: createLinkAnimationConfig(
-        "interaction",
-        view.getIsMobile()
-      ),
-      exitAnimationConfig: animate
-        ? createLinkAnimationConfig("exit", view.getIsMobile())
-        : undefined,
       hoverTransform: "bold",
       cursor: "pointer",
+      animationHandler: handler,
     });
+    handler.setElement(this);
   }
 }

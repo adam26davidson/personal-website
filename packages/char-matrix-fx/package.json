@@ -1,0 +1,27 @@
+{
+  "name": "@adam26davidson/char-matrix-fx",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "@adam26davidson/char-matrix": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}

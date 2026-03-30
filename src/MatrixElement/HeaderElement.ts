@@ -1,6 +1,5 @@
-import { DOT_CHAR } from "../constants";
-import TextElement from "./TextElement";
-import MatrixView from "../matrixView";
+import { DOT_CHAR, TextElement } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
 
 const MIN_WIDTH = 20;
 
@@ -15,7 +14,7 @@ const addUnderline = (text: string) => {
 };
 
 export class HeaderElement extends TextElement {
-  constructor(key: string, text: string, view: MatrixView) {
+  constructor(key: string, text: string, view: RenderTarget) {
     super({
       key,
       view,

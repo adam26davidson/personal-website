@@ -1,4 +1,4 @@
-import { SpringLattice } from "./springLattice";
+import { SpringLattice } from "@adam26davidson/char-matrix-fx";
 import { useRef, useEffect, useState } from "react";
 import chroma from "chroma-js";
 

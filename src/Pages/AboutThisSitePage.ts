@@ -1,8 +1,8 @@
 import { ContentPage } from "./ContentPage";
 import aboutThisSiteText from "./about_this_site.txt?raw";
-import { ParagraphElement } from "../MatrixElement/ParagraphElement";
-import { Element } from "../MatrixElement/Element";
+import { Element } from "@adam26davidson/char-matrix";
 import { HeaderElement } from "../MatrixElement/HeaderElement";
+import { ParagraphElement } from "../MatrixElement/ParagraphElement";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
 
 export class AboutThisSitePage extends ContentPage {

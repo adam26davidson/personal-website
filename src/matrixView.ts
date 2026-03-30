@@ -1,32 +1,25 @@
-import { SpringLattice } from "./springLattice";
-import topSimilarData from "./assets/top_similar.json";
-import { Element, SizingMethod } from "./MatrixElement/Element";
-import MatrixController from "./matrixController";
-import { CharMatrix } from "./UtilityTypes/CharMatrix";
-import { IntPoint, ZERO_POINT } from "./UtilityTypes/IntPoint";
-import { ContainerElement } from "./MatrixElement/ContainerElement";
-import { Y } from "./UtilityTypes/Axes";
-import { ParentElement } from "./MatrixElement/ParentElement";
-import { RealPoint } from "./UtilityTypes/RealPoint";
 import {
+  SizingMethod,
+  SurfaceTransform,
+  CharMatrix,
+  IntPoint,
+  ZERO_POINT,
+  Y,
+  RealPoint,
   DEFAULT_BACKGROUND_CHAR,
+  FONT_SIZE,
   MOBILE_WIDTH,
   NUM_PARTICLES,
   NUM_PARTICLES_MOBILE,
-} from "./constants";
+  Element,
+  ContainerElement,
+  ParentElement,
+} from "@adam26davidson/char-matrix";
+import { ReactRenderTarget } from "@adam26davidson/char-matrix-react";
+import { SpringLattice } from "@adam26davidson/char-matrix-fx";
+import MatrixController from "./matrixController";
 import { NavigateFunction } from "react-router";
-import { ReactNodeConfig } from "./UtilityTypes/ReactNodeConfig";
-
-interface TopSimilar {
-  [key: string]: string[];
-}
-
-const TOP_SIMILAR: TopSimilar = topSimilarData;
-
-// add character itself to the top similar list
-for (const key in TOP_SIMILAR) {
-  TOP_SIMILAR[key].unshift(key);
-}
+import { ReactNodeConfig } from "@adam26davidson/char-matrix-react";
 
 type Event =
   | {
@@ -34,16 +27,18 @@ type Event =
       position: { x: number; y: number };
     }
   | { type: "mouseUp" }
-  | { type: "resize"; position: { x: number; y: number } };
+  | { type: "resize"; position: { x: number; y: number } }
+  | { type: "wheel"; position: { x: number; y: number }; deltaY: number };
 
 type MouseVoveEvent = { x: number; y: number };
 
-class MatrixView extends ParentElement {
+class MatrixView extends ParentElement implements ReactRenderTarget {
   private size: IntPoint = ZERO_POINT;
   private pixelOffset: IntPoint = ZERO_POINT;
   private am: CharMatrix = new CharMatrix(ZERO_POINT); // animation matrix
   private cm: CharMatrix = new CharMatrix(ZERO_POINT); // content matrix
   private fm: CharMatrix = new CharMatrix(ZERO_POINT); // final matrix
+  private surfaceTransforms: SurfaceTransform[] = [];
   private isInitialized: boolean = false;
   private springLattice: SpringLattice = new SpringLattice();
   private mouseDown: boolean = false;
@@ -195,23 +190,23 @@ class MatrixView extends ParentElement {
     // throttledLog(this.fm.getRawMatrix());
   }
 
+  public addSurfaceTransform(transform: SurfaceTransform): void {
+    this.surfaceTransforms.push(transform);
+  }
+
   public getSurfaceMatrix() {
-    this.am.map((c: string, p: IntPoint) => {
-      const x = p.getX() / this.size.getX();
-      const y = p.getY() / this.size.getY();
-      const position = this.springLattice.sample(x, y);
-      const index = Math.min(Math.floor(Math.abs(position) * 10), 99);
-      let newChar = c;
-      if (c in TOP_SIMILAR) {
-        newChar = TOP_SIMILAR[c][index];
-      }
-      return newChar;
-    }, this.fm);
+    if (this.surfaceTransforms.length === 0) {
+      // No transforms — use animation matrix directly (preserves existing behavior)
+      return this.am.getRawMatrix();
+    }
 
-    const matrix = this.fm.getRawMatrix();
-    //throttledLog(matrix);
+    let source = this.am;
+    for (const transform of this.surfaceTransforms) {
+      transform.transform(source, this.fm, this.size);
+      source = this.fm;
+    }
 
-    return matrix;
+    return this.fm.getRawMatrix();
   }
 
   public updateReactNodeConfig(key: string, reactNode: ReactNodeConfig) {
@@ -258,6 +253,15 @@ class MatrixView extends ParentElement {
     this.eventQueue.push(event);
   }
 
+  public handleWheel(x: number, y: number, deltaY: number) {
+    const event: Event = {
+      type: "wheel",
+      position: { x, y },
+      deltaY,
+    };
+    this.eventQueue.push(event);
+  }
+
   private processEvents() {
     if (this.mouseMoveEvent) {
       this.processMouseMove(this.mouseMoveEvent.x, this.mouseMoveEvent.y);
@@ -275,6 +279,9 @@ class MatrixView extends ParentElement {
         case "resize":
           this.processResize(event.position.x, event.position.y);
           break;
+        case "wheel":
+          this.processWheel(event.position.x, event.position.y, event.deltaY);
+          break;
       }
     }
     this.eventQueue = [];
@@ -283,6 +290,8 @@ class MatrixView extends ParentElement {
   private processMouseUp() {
     this.mouseDown = false;
     this.springLattice.setAttractorOff();
+    const p = new RealPoint(this.size.getX() / 2, this.size.getY() / 2);
+    this.rootElement.handleMouseUp(p);
   }
 
   private processMouseDown(x: number, y: number) {
@@ -300,6 +309,12 @@ class MatrixView extends ParentElement {
     }
     const p = new RealPoint(x * this.size.getX(), y * this.size.getY());
     this.rootElement.handleMouseMove(p);
+  }
+
+  private processWheel(x: number, y: number, deltaY: number) {
+    const charDelta = deltaY / FONT_SIZE;
+    const p = new RealPoint(x * this.size.getX(), y * this.size.getY());
+    this.rootElement.handleWheel(p, charDelta);
   }
 
   private processResize(x: number, y: number) {

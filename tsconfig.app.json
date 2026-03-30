@@ -25,8 +25,11 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@adam26davidson/char-matrix": ["./packages/char-matrix/src/index.ts"],
+      "@adam26davidson/char-matrix-react": ["./packages/char-matrix-react/src/index.ts"],
+      "@adam26davidson/char-matrix-fx": ["./packages/char-matrix-fx/src/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "packages/*/src"]
 }

@@ -1,21 +1,25 @@
 import { ComponentType } from "react";
-import { charsToPixelsX, charsToPixelsY } from "../Utilities/MiscUtils";
-import { ReactComponentType } from "../UtilityTypes/ReactNodeConfig";
-import { Element, ElementConfig } from "./Element";
+import { Element, charsToPixelsX, charsToPixelsY } from "@adam26davidson/char-matrix";
+import type { ElementConfig } from "@adam26davidson/char-matrix";
+import { ReactRenderTarget } from "./ReactRenderTarget";
+import { ReactComponentType } from "./ReactNodeConfig";
 
 export interface ReactComponentElementConfig extends ElementConfig {
   type: ReactComponentType;
   content?: ComponentType;
+  view: ReactRenderTarget;
 }
 
 export class ReactComponentElement extends Element {
   private type: ReactComponentType;
   private content?: ComponentType;
+  protected override view: ReactRenderTarget;
 
   constructor(config: ReactComponentElementConfig) {
     super(config);
     this.type = config.type;
     this.content = config.content;
+    this.view = config.view;
     console.log(
       "configuring react component element",
       this.key,

@@ -1,8 +1,8 @@
 import { ContentPage } from "./ContentPage";
 import professionalExperienceText from "./professional_experience.txt?raw";
-import { ParagraphElement } from "../MatrixElement/ParagraphElement";
-import { Element } from "../MatrixElement/Element";
+import { Element } from "@adam26davidson/char-matrix";
 import { HeaderElement } from "../MatrixElement/HeaderElement";
+import { ParagraphElement } from "../MatrixElement/ParagraphElement";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
 
 export class ProfessionalExperiencePage extends ContentPage {

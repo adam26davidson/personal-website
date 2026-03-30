@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { SpringLattice } from "./springLattice";
-import MatrixView from "./matrixView";
-import _ from "lodash";
-import { useLocation, useNavigate } from "react-router";
 import {
+  IntPoint,
   FONT_SIZE,
   MOBILE_WIDTH,
   NUM_PARTICLES,
   NUM_PARTICLES_MOBILE,
-} from "./constants";
-import { IntPoint } from "./UtilityTypes/IntPoint";
-import { ReactNodeConfig } from "./UtilityTypes/ReactNodeConfig";
+} from "@adam26davidson/char-matrix";
+import { ReactNodeConfig } from "@adam26davidson/char-matrix-react";
+import { SpringLattice, SpringLatticeSurfaceTransform } from "@adam26davidson/char-matrix-fx";
+import MatrixView from "./matrixView";
+import _ from "lodash";
+import { useLocation, useNavigate } from "react-router";
 import { BlogPost } from "./components/BlogPost";
 
 const matrixView = new MatrixView();
 const lattice = new SpringLattice();
+matrixView.addSurfaceTransform(new SpringLatticeSurfaceTransform(lattice));
 
 function CharacterMatrix() {
   const ref = useRef<HTMLDivElement>(null);
@@ -133,6 +134,19 @@ function CharacterMatrix() {
     const [x, y] = getNormalizedMousePosition(event);
     matrixView.handleMouseMove(x, y);
   };
+
+  // Wheel handler registered via ref to allow preventDefault (React onWheel is passive)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const [x, y] = calculateNormalizedPosition(event.clientX, event.clientY);
+      matrixView.handleWheel(x, y, event.deltaY);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
 
   const getNormalizedMousePosition = (event: React.MouseEvent) => {
     return calculateNormalizedPosition(event.clientX, event.clientY);

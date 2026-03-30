@@ -1,7 +1,7 @@
 import { SPACE_CHAR } from "../constants";
-import { toBold } from "../Utilities/MiscUtils";
-import { AXES } from "../UtilityTypes/Axes";
-import { IntPoint } from "../UtilityTypes/IntPoint";
+import { toBold } from "../utils/MiscUtils";
+import { AXES } from "../types/Axes";
+import { IntPoint } from "../types/IntPoint";
 import { Element, ElementConfig } from "./Element";
 
 const CHILD_PLACEHOLDER = "XxcPzi6xKg";

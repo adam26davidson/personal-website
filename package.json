@@ -3,15 +3,26 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "prebuild": "node generatePostIndex.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "generate:posts": "node generatePostIndex.mjs"
+    "build:packages": "npm run build -w @adam26davidson/char-matrix && npm run build -w @adam26davidson/char-matrix-react && npm run build -w @adam26davidson/char-matrix-fx",
+    "clean:packages": "npm run clean --workspaces",
+    "generate:posts": "node generatePostIndex.mjs",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "publish-packages": "npm run build:packages && changeset publish"
   },
   "dependencies": {
+    "@adam26davidson/char-matrix": "*",
+    "@adam26davidson/char-matrix-fx": "*",
+    "@adam26davidson/char-matrix-react": "*",
     "@hookform/resolvers": "^5.0.1",
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
@@ -42,6 +53,7 @@
     "zod": "^3.25.17"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/lodash": "^4.17.13",
     "@types/node": "^22.15.21",

@@ -1,5 +1,5 @@
-import { Axis, X, Y } from "../UtilityTypes/Axes";
-import { IntPoint } from "../UtilityTypes/IntPoint";
+import { Axis, X, Y } from "../types/Axes";
+import { IntPoint } from "../types/IntPoint";
 import { Element, ElementConfig } from "./Element";
 
 export type Alignment = "start" | "end" | "center";

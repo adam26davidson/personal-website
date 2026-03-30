@@ -1,6 +1,6 @@
 import { SizingMethod, Element } from "./Element";
-import { AXES, Axis } from "../UtilityTypes/Axes";
-import { IntPoint } from "../UtilityTypes/IntPoint";
+import { AXES, Axis } from "../types/Axes";
+import { IntPoint } from "../types/IntPoint";
 
 export abstract class ParentElement {
   protected children: Element[] = [];

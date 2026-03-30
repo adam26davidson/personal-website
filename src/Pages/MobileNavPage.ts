@@ -1,6 +1,5 @@
-import { ContainerElement } from "../MatrixElement/ContainerElement";
+import { X, Y, ContainerElement } from "@adam26davidson/char-matrix";
 import { LinkElement } from "../MatrixElement/LinkElement";
-import { X, Y } from "../UtilityTypes/Axes";
 import { LINKS, Page } from "./Page";
 
 const DOT_CHAR = "\u00b7";

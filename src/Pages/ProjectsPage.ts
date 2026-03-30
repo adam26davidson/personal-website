@@ -1,8 +1,8 @@
 import { ContentPage } from "./ContentPage";
 import projectsText from "./projects.txt?raw";
-import { ParagraphElement } from "../MatrixElement/ParagraphElement";
-import { Element } from "../MatrixElement/Element";
+import { Element } from "@adam26davidson/char-matrix";
 import { HeaderElement } from "../MatrixElement/HeaderElement";
+import { ParagraphElement } from "../MatrixElement/ParagraphElement";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
 import { LinkElement } from "../MatrixElement/LinkElement";
 
