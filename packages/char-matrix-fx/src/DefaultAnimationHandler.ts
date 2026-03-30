@@ -1,5 +1,5 @@
-import { Element, IntPoint } from "char-matrix";
-import type { ElementAnimationHandler, RenderTarget } from "char-matrix";
+import { Element, IntPoint } from "@adam26davidson/char-matrix";
+import type { ElementAnimationHandler, RenderTarget } from "@adam26davidson/char-matrix";
 import { type Animation, type AnimationConfig } from "./Animation";
 import { createAnimation } from "./createAnimation";
 

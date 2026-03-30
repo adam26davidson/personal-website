@@ -1,6 +1,6 @@
 import { ComponentType } from "react";
-import { Element, charsToPixelsX, charsToPixelsY } from "char-matrix";
-import type { ElementConfig } from "char-matrix";
+import { Element, charsToPixelsX, charsToPixelsY } from "@adam26davidson/char-matrix";
+import type { ElementConfig } from "@adam26davidson/char-matrix";
 import { ReactRenderTarget } from "./ReactRenderTarget";
 import { ReactComponentType } from "./ReactNodeConfig";
 

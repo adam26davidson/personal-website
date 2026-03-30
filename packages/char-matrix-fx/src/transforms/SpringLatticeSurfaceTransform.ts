@@ -1,5 +1,5 @@
-import { CharMatrix, IntPoint } from "char-matrix";
-import type { SurfaceTransform } from "char-matrix";
+import { CharMatrix, IntPoint } from "@adam26davidson/char-matrix";
+import type { SurfaceTransform } from "@adam26davidson/char-matrix";
 import { SpringLattice } from "../SpringLattice";
 import TOP_SIMILAR from "../topSimilar";
 

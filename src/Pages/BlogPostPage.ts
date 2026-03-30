@@ -1,7 +1,7 @@
 import { ContentPage } from "./ContentPage";
-import { SPACE_CHAR, getPostIdFromTitle, Element } from "char-matrix";
+import { SPACE_CHAR, getPostIdFromTitle, Element } from "@adam26davidson/char-matrix";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
-import { ReactComponentElement } from "char-matrix-react";
+import { ReactComponentElement } from "@adam26davidson/char-matrix-react";
 import { BLOG_POST_LIST } from "../blogPosts/post-list";
 
 export class BlogPostPage extends ContentPage {

@@ -25,9 +25,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "char-matrix": path.resolve(__dirname, "./packages/char-matrix/src/index.ts"),
-      "char-matrix-react": path.resolve(__dirname, "./packages/char-matrix-react/src/index.ts"),
-      "char-matrix-fx": path.resolve(__dirname, "./packages/char-matrix-fx/src/index.ts"),
+      "@adam26davidson/char-matrix": path.resolve(__dirname, "./packages/char-matrix/src/index.ts"),
+      "@adam26davidson/char-matrix-react": path.resolve(__dirname, "./packages/char-matrix-react/src/index.ts"),
+      "@adam26davidson/char-matrix-fx": path.resolve(__dirname, "./packages/char-matrix-fx/src/index.ts"),
     },
   },
 });

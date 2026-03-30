@@ -1,5 +1,5 @@
 {
-  "name": "char-matrix-fx",
+  "name": "@adam26davidson/char-matrix-fx",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,12 +11,15 @@
     }
   },
   "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "char-matrix": "*"
+    "@adam26davidson/char-matrix": "*"
   },
   "devDependencies": {
     "typescript": "^5.2.2"

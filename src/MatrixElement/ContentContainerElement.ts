@@ -1,6 +1,6 @@
-import { DOT_CHAR, Y, ContainerElement } from "char-matrix";
-import type { RenderTarget } from "char-matrix";
-import { DefaultAnimationHandler } from "char-matrix-fx";
+import { DOT_CHAR, Y, ContainerElement } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
+import { DefaultAnimationHandler } from "@adam26davidson/char-matrix-fx";
 
 export class ContentContainerElement extends ContainerElement {
   constructor(key: string, view: RenderTarget, noYPadding?: boolean) {

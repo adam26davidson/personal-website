@@ -1,4 +1,4 @@
-import { DOT_CHAR, X, Y, ContainerElement, Element } from "char-matrix";
+import { DOT_CHAR, X, Y, ContainerElement, Element } from "@adam26davidson/char-matrix";
 import { LinkElement } from "../MatrixElement/LinkElement";
 import { Page, LINKS } from "./Page";
 import {

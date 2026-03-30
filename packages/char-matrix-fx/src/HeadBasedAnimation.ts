@@ -1,5 +1,5 @@
-import { Element, IntPoint, DEFAULT_BACKGROUND_CHAR } from "char-matrix";
-import type { RenderTarget } from "char-matrix";
+import { Element, IntPoint, DEFAULT_BACKGROUND_CHAR } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
 import { Animation, AnimationUse } from "./Animation";
 import TOP_SIMILAR from "./topSimilar";
 

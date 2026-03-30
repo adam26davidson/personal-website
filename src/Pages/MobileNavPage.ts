@@ -1,4 +1,4 @@
-import { X, Y, ContainerElement } from "char-matrix";
+import { X, Y, ContainerElement } from "@adam26davidson/char-matrix";
 import { LinkElement } from "../MatrixElement/LinkElement";
 import { LINKS, Page } from "./Page";
 

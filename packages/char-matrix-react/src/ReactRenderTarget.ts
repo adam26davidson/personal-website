@@ -1,4 +1,4 @@
-import type { RenderTarget } from "char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
 import type { ReactNodeConfig } from "./ReactNodeConfig";
 
 /**

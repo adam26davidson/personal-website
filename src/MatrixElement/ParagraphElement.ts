@@ -1,5 +1,5 @@
-import { SPACE_CHAR, TextElement } from "char-matrix";
-import type { RenderTarget } from "char-matrix";
+import { SPACE_CHAR, TextElement } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
 
 export class ParagraphElement extends TextElement {
   constructor(

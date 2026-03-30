@@ -1,5 +1,5 @@
-import { Element, IntPoint } from "char-matrix";
-import type { RenderTarget } from "char-matrix";
+import { Element, IntPoint } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
 import { DiagonalSwipeAnimationConfig } from "./Animation";
 import { HeadBasedAnimation } from "./HeadBasedAnimation";
 

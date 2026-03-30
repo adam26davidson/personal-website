@@ -1,6 +1,6 @@
-import { SPACE_CHAR, TextElement } from "char-matrix";
-import type { RenderTarget } from "char-matrix";
-import { DefaultAnimationHandler } from "char-matrix-fx";
+import { SPACE_CHAR, TextElement } from "@adam26davidson/char-matrix";
+import type { RenderTarget } from "@adam26davidson/char-matrix";
+import { DefaultAnimationHandler } from "@adam26davidson/char-matrix-fx";
 
 const largeTitleText =
   "  __   ____   __   _  _    ____   __   _  _  __  ____  ____   __   __ _  \n" +

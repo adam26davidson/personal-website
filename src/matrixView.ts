@@ -14,12 +14,12 @@ import {
   Element,
   ContainerElement,
   ParentElement,
-} from "char-matrix";
-import { ReactRenderTarget } from "char-matrix-react";
-import { SpringLattice } from "char-matrix-fx";
+} from "@adam26davidson/char-matrix";
+import { ReactRenderTarget } from "@adam26davidson/char-matrix-react";
+import { SpringLattice } from "@adam26davidson/char-matrix-fx";
 import MatrixController from "./matrixController";
 import { NavigateFunction } from "react-router";
-import { ReactNodeConfig } from "char-matrix-react";
+import { ReactNodeConfig } from "@adam26davidson/char-matrix-react";
 
 type Event =
   | {

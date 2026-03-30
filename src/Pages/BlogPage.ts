@@ -1,5 +1,5 @@
 import { ContentPage } from "./ContentPage";
-import { DOT_CHAR, SPACE_CHAR, toBold, Element, ContainerElement, TextElement } from "char-matrix";
+import { DOT_CHAR, SPACE_CHAR, toBold, Element, ContainerElement, TextElement } from "@adam26davidson/char-matrix";
 import { HeaderElement } from "../MatrixElement/HeaderElement";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
 import { BLOG_POST_LIST } from "../blogPosts/post-list";

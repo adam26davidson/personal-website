@@ -5,9 +5,9 @@ import {
   MOBILE_WIDTH,
   NUM_PARTICLES,
   NUM_PARTICLES_MOBILE,
-} from "char-matrix";
-import { ReactNodeConfig } from "char-matrix-react";
-import { SpringLattice, SpringLatticeSurfaceTransform } from "char-matrix-fx";
+} from "@adam26davidson/char-matrix";
+import { ReactNodeConfig } from "@adam26davidson/char-matrix-react";
+import { SpringLattice, SpringLatticeSurfaceTransform } from "@adam26davidson/char-matrix-fx";
 import MatrixView from "./matrixView";
 import _ from "lodash";
 import { useLocation, useNavigate } from "react-router";

@@ -18,11 +18,10 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "dist",
-    "rootDir": "src",
-    "composite": true
+    "baseUrl": ".",
+    "paths": {
+      "@adam26davidson/char-matrix": ["../char-matrix/src/index.ts"]
+    }
   },
-  "include": ["src"],
-  "references": [
-    { "path": "../char-matrix" }
-  ]
+  "include": ["src"]
 }

@@ -1,5 +1,5 @@
 import { ContentPage } from "./ContentPage";
-import { Element } from "char-matrix";
+import { Element } from "@adam26davidson/char-matrix";
 import { HeaderElement } from "../MatrixElement/HeaderElement";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
 import { LinkElement } from "../MatrixElement/LinkElement";

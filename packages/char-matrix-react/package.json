@@ -1,5 +1,5 @@
 {
-  "name": "char-matrix-react",
+  "name": "@adam26davidson/char-matrix-react",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,15 +11,18 @@
     }
   },
   "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "lodash": "^4.17.21"
   },
   "peerDependencies": {
-    "char-matrix": "*",
+    "@adam26davidson/char-matrix": "*",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },

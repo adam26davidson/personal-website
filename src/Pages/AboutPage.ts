@@ -1,6 +1,6 @@
 import { ContentPage } from "./ContentPage";
 import aboutText from "./about.txt?raw";
-import { Element } from "char-matrix";
+import { Element } from "@adam26davidson/char-matrix";
 import { HeaderElement } from "../MatrixElement/HeaderElement";
 import { ParagraphElement } from "../MatrixElement/ParagraphElement";
 import { ContentContainerElement } from "../MatrixElement/ContentContainerElement";
