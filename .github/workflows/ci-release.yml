@@ -1,0 +1,52 @@
+name: CI (Release PR)
+
+# Runs validation on the changeset version PR.
+# Needed because the release workflow uses GITHUB_TOKEN to push the
+# changeset-release/main branch, and GITHUB_TOKEN pushes do not
+# trigger pull_request workflows.
+
+on:
+  push:
+    branches: [changeset-release/main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Build packages
+        run: npm run build:packages
+
+      - name: Build app
+        run: npm run build
+
+      - name: Report validate status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            STATE="success"
+          else
+            STATE="failure"
+          fi
+          gh api repos/${{ github.repository }}/statuses/${{ github.sha }} \
+            -f state="$STATE" \
+            -f context="validate" \
+            -f description="CI (Release PR)" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
