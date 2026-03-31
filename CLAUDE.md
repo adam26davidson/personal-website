@@ -10,6 +10,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Preview production build:** `npm run preview`
 - **Generate blog post index:** `npm run generate:posts`
 
+## Developer Workflow
+
+This repo uses [changesets](https://github.com/changesets/changesets) with a 2-PR release process.
+
+### Working on an issue
+
+1. **Create a feature branch** from `main`
+2. **Make your changes** and commit as you go
+3. **Add a changeset** — run `npx changeset`, select affected packages, and choose the semver bump type (`patch`/`minor`/`major`). This creates a `.changeset/*.md` file describing the change. Commit it with your code. CI will fail without one if packages changed.
+4. **Open a PR** to `main` — CI runs type-check, package builds, app build, and verifies a changeset exists
+5. **Merge the PR** once CI passes and code is reviewed
+
+### Releasing
+
+When a code PR merges to `main`, the Release workflow automatically:
+- Runs `changeset version` to bump package versions and generate changelogs
+- Creates/updates a **version PR** (`changeset-release/main` branch) titled "chore: version packages"
+
+Multiple code PRs can merge before releasing — their changesets accumulate into a single version PR.
+
+**To publish:** merge the version PR. The Release workflow runs again, detects no pending changesets, and runs `npm run publish-packages` to publish to npm and create GitHub releases.
+
 ## Architecture
 
 This is a personal portfolio website built with React + TypeScript + Vite. The site renders all content as a **character matrix** — a full-screen grid of monospaced Unicode characters (Unifont) that animates via a spring-lattice physics simulation.
