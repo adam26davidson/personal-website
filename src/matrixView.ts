@@ -14,6 +14,7 @@ import {
   Element,
   ContainerElement,
   ParentElement,
+  CursorType,
 } from "@adam26davidson/char-matrix";
 import { ReactRenderTarget } from "@adam26davidson/char-matrix-react";
 import { SpringLattice } from "@adam26davidson/char-matrix-fx";
@@ -98,6 +99,12 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
   public setRoute = (route: string) => this.matrixController.setRoute(route);
   public setNavigate = (navigate: NavigateFunction) =>
     this.matrixController.setNavigate(navigate);
+
+  public setCursor(cursor: CursorType): void {
+    if (document.body.style.cursor !== cursor) {
+      document.body.style.cursor = cursor;
+    }
+  }
 
   public getContentOffset = () => ZERO_POINT;
 

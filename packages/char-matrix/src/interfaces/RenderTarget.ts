@@ -1,4 +1,5 @@
 import { IntPoint } from "../types/IntPoint";
+import type { CursorType } from "../Element/ElementBase";
 import type { Element } from "../Element/Element";
 
 /**
@@ -6,6 +7,8 @@ import type { Element } from "../Element/Element";
  * Elements interact with the rendering system only through this interface.
  */
 export interface RenderTarget {
+  // --- Cursor ---
+  setCursor(cursor: CursorType): void;
   // --- Character buffer operations ---
   setContentLayerChar(
     char: string,
