@@ -57,9 +57,7 @@ export abstract class ElementInteraction extends ElementDrawing {
           this.handleMouseEnter();
         }
         if (!childrenDeterminingMouse && pointIsInside) {
-          if (document.body.style.cursor !== this.cursor) {
-            document.body.style.cursor = this.cursor;
-          }
+          this.view.setCursor(this.cursor);
           determiningMouse = true;
         }
       }
