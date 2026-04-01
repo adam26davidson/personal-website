@@ -93,6 +93,38 @@ export class TableElement extends Element {
       Math.max(1, ...row.map((cell) => cell.length))
     );
 
+    // If the table has a fixed/expanded height, distribute extra vertical
+    // space evenly among data rows so the grid fills the available area.
+    if (
+      this.sizingMethod.y !== "content" &&
+      this.rows.length > 0
+    ) {
+      const contentAreaHeight = this.getContentAreaSize().getY();
+      // Calculate fixed overhead: top border + title + title sep + header + header sep + row seps + bottom border
+      let fixedHeight = 2; // top + bottom border
+      if (titleLines.length > 0) {
+        fixedHeight += titleLines.length + 1; // title rows + separator
+      }
+      if (headerHeight > 0) {
+        fixedHeight += headerHeight;
+        if (dataCells.length > 0) fixedHeight += 1; // header separator
+      }
+      if (this.showRowSeparators && dataCells.length > 1) {
+        fixedHeight += dataCells.length - 1; // row separators
+      }
+
+      const contentRowHeight = rowHeights.reduce((a, b) => a + b, 0);
+      const availableForRows = contentAreaHeight - fixedHeight;
+      if (availableForRows > contentRowHeight) {
+        const extra = availableForRows - contentRowHeight;
+        const perRow = Math.floor(extra / rowHeights.length);
+        const remainder = extra - perRow * rowHeights.length;
+        for (let i = 0; i < rowHeights.length; i++) {
+          rowHeights[i] += perRow + (i < remainder ? 1 : 0);
+        }
+      }
+    }
+
     // Build the grid
     this.cachedGrid = this.buildGrid(
       titleLines,
@@ -306,18 +338,16 @@ export class TableElement extends Element {
       }
     }
 
-    // Third pass: expand columns
+    // Third pass: expand columns — distribute remainder evenly
     if (expandCount > 0) {
       const remaining = availableWidth - usedWidth;
       const perExpand = Math.floor(remaining / expandCount);
+      const extraPixels = remaining - perExpand * expandCount;
       let assigned = 0;
       for (let i = 0; i < numCols; i++) {
         if ((this.columns[i].widthType || "expand") === "expand") {
+          widths[i] = perExpand + (assigned < extraPixels ? 1 : 0);
           assigned++;
-          widths[i] =
-            assigned === expandCount
-              ? remaining - perExpand * (expandCount - 1)
-              : perExpand;
         }
       }
     }
@@ -346,39 +376,41 @@ export class TableElement extends Element {
     if (maxWidth <= 0) return [""];
     if (text === "") return [""];
 
-    // Split on actual spaces (not SPACE_CHAR) for word wrapping
-    const words = text.split(" ");
-    const lines: string[] = [];
-    let currentLine = "";
+    // Handle explicit newlines first, then wrap each line
+    const inputLines = text.split("\n");
+    const result: string[] = [];
 
-    for (const word of words) {
-      const wordChars = [...word];
-      if (wordChars.length > maxWidth) {
-        // Break long word across lines
-        if ([...currentLine].length > 0) {
-          lines.push(currentLine);
-          currentLine = "";
-        }
-        for (let i = 0; i < wordChars.length; i += maxWidth) {
-          const chunk = wordChars.slice(i, i + maxWidth).join("");
-          if (i + maxWidth < wordChars.length) {
-            lines.push(chunk);
-          } else {
-            currentLine = chunk;
+    for (const inputLine of inputLines) {
+      const words = inputLine.split(" ");
+      let currentLine = "";
+
+      for (const word of words) {
+        const wordChars = [...word];
+        if (wordChars.length > maxWidth) {
+          if ([...currentLine].length > 0) {
+            result.push(currentLine);
+            currentLine = "";
           }
+          for (let i = 0; i < wordChars.length; i += maxWidth) {
+            const chunk = wordChars.slice(i, i + maxWidth).join("");
+            if (i + maxWidth < wordChars.length) {
+              result.push(chunk);
+            } else {
+              currentLine = chunk;
+            }
+          }
+        } else if ([...currentLine].length === 0) {
+          currentLine = word;
+        } else if ([...currentLine].length + 1 + wordChars.length > maxWidth) {
+          result.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine += " " + word;
         }
-      } else if ([...currentLine].length === 0) {
-        currentLine = word;
-      } else if ([...currentLine].length + 1 + wordChars.length > maxWidth) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine += " " + word;
       }
+      result.push(currentLine);
     }
-    if ([...currentLine].length > 0 || lines.length === 0) {
-      lines.push(currentLine);
-    }
-    return lines;
+
+    return result.length > 0 ? result : [""];
   }
 }
