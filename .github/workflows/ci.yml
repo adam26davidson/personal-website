@@ -25,6 +25,9 @@ jobs:
       - name: Build packages
         run: npm run build:packages
 
+      - name: Test packages
+        run: npx vitest run
+
       - name: Build app
         run: npm run build
 
