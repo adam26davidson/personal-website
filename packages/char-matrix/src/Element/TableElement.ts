@@ -116,11 +116,32 @@ export class TableElement extends Element {
       const contentRowHeight = rowHeights.reduce((a, b) => a + b, 0);
       const availableForRows = contentAreaHeight - fixedHeight;
       if (availableForRows > contentRowHeight) {
-        const extra = availableForRows - contentRowHeight;
-        const perRow = Math.floor(extra / rowHeights.length);
-        const remainder = extra - perRow * rowHeights.length;
+        // Target a uniform row height. Rows already taller than the
+        // target keep their content height; the extra space goes to
+        // the shorter rows.
+        const targetHeight = Math.floor(availableForRows / rowHeights.length);
+        let surplus = 0;
+        let shortRows = 0;
+        for (const h of rowHeights) {
+          if (h > targetHeight) {
+            surplus += h - targetHeight;
+          } else {
+            shortRows++;
+          }
+        }
+        // Redistribute: short rows share (available - tall rows' content)
+        const spaceForShort = availableForRows - rowHeights.reduce(
+          (acc, h) => acc + (h > targetHeight ? h : 0), 0
+        );
+        const perShort = shortRows > 0 ? Math.floor(spaceForShort / shortRows) : 0;
+        const shortRemainder = shortRows > 0 ? spaceForShort - perShort * shortRows : 0;
+        let shortIdx = 0;
         for (let i = 0; i < rowHeights.length; i++) {
-          rowHeights[i] += perRow + (i < remainder ? 1 : 0);
+          if (rowHeights[i] <= targetHeight) {
+            rowHeights[i] = perShort + (shortIdx < shortRemainder ? 1 : 0);
+            shortIdx++;
+          }
+          // Tall rows keep their content height
         }
       }
     }
