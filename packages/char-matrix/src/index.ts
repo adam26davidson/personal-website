@@ -49,3 +49,6 @@ export { toBigChar, toBigText, parseHexGlyph } from "./utils/BigText";
 
 // Compact big text (Spleen 5×8 → 3×2 octants)
 export { toCompactBigChar, toCompactBigText, parseSpleenGlyph } from "./utils/BigTextCompact";
+
+// Medium big text (Spleen 6×12 → 3×3 octants)
+export { toMediumBigChar, toMediumBigText, parseSpleen6x12Glyph } from "./utils/BigTextMedium";
