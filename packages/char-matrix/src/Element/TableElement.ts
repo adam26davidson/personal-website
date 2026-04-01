@@ -21,12 +21,14 @@ export interface TableRowConfig {
 export interface TableElementConfig extends ElementConfig {
   columns: ColumnDef[];
   title?: string;
+  titleAlign?: "start" | "center" | "end";
   showRowSeparators?: boolean;
 }
 
 export class TableElement extends Element {
   private columns: ColumnDef[];
   private title: string | undefined;
+  private titleAlign: "start" | "center" | "end";
   private showRowSeparators: boolean;
   private rows: TableRowConfig[] = [];
 
@@ -38,6 +40,7 @@ export class TableElement extends Element {
     super({ ...config, bordered: false });
     this.columns = config.columns;
     this.title = config.title;
+    this.titleAlign = config.titleAlign ?? "start";
     this.showRowSeparators = config.showRowSeparators ?? true;
     this.reprocessContent();
   }
@@ -163,7 +166,7 @@ export class TableElement extends Element {
     if (hasTitle) {
       const innerWidth = this.getInnerContentWidth();
       for (const line of titleLines) {
-        lines.push("│" + this.padText(line, innerWidth, "start") + "│");
+        lines.push("│" + this.padText(line, innerWidth, this.titleAlign) + "│");
       }
       // Title-to-headers/data separator
       lines.push(this.buildHorizontalLine("├", "─", "┬", "┤"));
