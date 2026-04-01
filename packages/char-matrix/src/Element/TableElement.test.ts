@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { TableElement } from "./TableElement";
+import TextElement from "./TextElement";
 import { IntPoint, ZERO_POINT } from "../types/IntPoint";
 import { SPACE_CHAR } from "../constants";
 import { CharMatrix } from "../types/CharMatrix";
@@ -479,6 +480,106 @@ describe("TableElement", () => {
       // 1 bottom border
       // = 9
       expect(table.getSize().getY()).toBe(9);
+    });
+  });
+
+  describe("element cells", () => {
+    it("accepts an Element as a cell", () => {
+      const view = createMockView(20, 10);
+
+      const cellElement = new TextElement({
+        key: "custom-cell",
+        view,
+        text: "HI",
+        widthType: "content",
+        heightType: "content",
+      });
+
+      const lines = renderTable({
+        key: "t",
+        view,
+        columns: [{ widthType: "expand" }, { widthType: "expand" }],
+        width: 13,
+        widthType: "absolute",
+        heightType: "content",
+      }, [
+        { cells: [{ element: cellElement }, { text: "B" }] },
+      ]);
+
+      // The element cell should have spaces in the grid (element draws itself)
+      // The text cell should render normally
+      expect(lines[0]).toContain("╭─────┬─────╮");
+      expect(lines[2]).toContain("╰─────┴─────╯");
+      // Text cell B should be visible
+      expect(lines[1]).toContain("B");
+    });
+
+    it("accepts an Element directly in the cells array", () => {
+      const view = createMockView(20, 10);
+
+      const cellElement = new TextElement({
+        key: "direct-el",
+        view,
+        text: "X",
+        widthType: "content",
+        heightType: "content",
+      });
+
+      const lines = renderTable({
+        key: "t",
+        view,
+        columns: [{ widthType: "expand" }],
+        width: 8,
+        widthType: "absolute",
+        heightType: "content",
+      }, [
+        { cells: [cellElement as any] },
+      ]);
+
+      expect(lines[0]).toContain("╭──────╮");
+      expect(lines[2]).toContain("╰──────╯");
+    });
+
+    it("element cell height drives row height", () => {
+      const view = createMockView(30, 30);
+
+      // Create a multi-line element
+      const cellElement = new TextElement({
+        key: "tall-cell",
+        view,
+        text: "Line1\nLine2\nLine3",
+        widthType: "content",
+        heightType: "content",
+      });
+
+      const parent = new ContainerElement({
+        key: "p",
+        view,
+        mainAxis: Y,
+        width: 30,
+        widthType: "absolute",
+        height: 30,
+        heightType: "absolute",
+      });
+
+      const table = new TableElement({
+        key: "t",
+        view,
+        columns: [{ widthType: "expand" }, { widthType: "expand" }],
+        width: 15,
+        widthType: "absolute",
+        heightType: "content",
+      });
+
+      table.setRows([
+        { cells: [{ element: cellElement }, { text: "Short" }] },
+      ]);
+
+      parent.setChildren([table]);
+
+      // Row height should be driven by the element (3 lines)
+      // Total: top border + 3 row lines + bottom border = 5
+      expect(table.getSize().getY()).toBe(5);
     });
   });
 });

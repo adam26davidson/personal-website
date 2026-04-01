@@ -12,10 +12,11 @@ export interface ColumnDef {
 
 export interface TableCellConfig {
   text?: string;
+  element?: Element;
 }
 
 export interface TableRowConfig {
-  cells: TableCellConfig[];
+  cells: (TableCellConfig | Element)[];
 }
 
 export interface TableElementConfig extends ElementConfig {
@@ -36,6 +37,10 @@ export class TableElement extends Element {
   private resolvedColumnWidths: number[] = [];
   private cachedGrid: string[] = [];
 
+  // Element cells: track which cells are Elements vs text
+  private elementCells: { element: Element; row: number; col: number }[] = [];
+  private isProcessing = false;
+
   constructor(config: TableElementConfig) {
     super({ ...config, bordered: false });
     this.columns = config.columns;
@@ -48,7 +53,36 @@ export class TableElement extends Element {
   // --- Public API ---
 
   public setRows(rows: TableRowConfig[]): void {
+    // Unregister old element children
+    for (const { element } of this.elementCells) {
+      element.unregisterWithView();
+    }
+
     this.rows = rows;
+
+    // Collect element cells and register them as children
+    this.elementCells = [];
+    for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+      const row = rows[rowIdx];
+      for (let colIdx = 0; colIdx < row.cells.length; colIdx++) {
+        const cell = row.cells[colIdx];
+        const el = cell instanceof Element
+          ? cell
+          : (cell as TableCellConfig).element;
+        if (el) {
+          this.elementCells.push({ element: el, row: rowIdx, col: colIdx });
+        }
+      }
+    }
+
+    this.children = this.elementCells.map((ec) => ec.element);
+    for (const child of this.children) {
+      child.setParent(this);
+      if (this.isOnView) {
+        child.registerWithView();
+      }
+    }
+
     this.reprocessContent();
     this.flagForRedraw();
   }
@@ -59,9 +93,23 @@ export class TableElement extends Element {
     this.flagForRedraw();
   }
 
+  // --- Override child management ---
+
+  // Table manages cell sizes directly; skip generic resize logic.
+  protected override resizeChildren(): void {}
+
+  public override handleChildResize(): void {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+    this.reprocessContent();
+    this.flagForRedraw();
+    this.isProcessing = false;
+  }
+
   // --- Element abstract methods ---
 
   protected reprocessContent(): void {
+    this.isProcessing = true;
     this.resolveColumnWidths();
 
     const hasTitle = !!this.title;
@@ -82,71 +130,51 @@ export class TableElement extends Element {
       ? Math.max(1, ...headerCells.map((h) => h.length))
       : 0;
 
-    // Word-wrap data cells
-    const dataCells = this.rows.map((row) =>
-      this.columns.map((_, colIndex) => {
-        const cellText = row.cells[colIndex]?.text || "";
-        return this.wrapText(cellText, this.resolvedColumnWidths[colIndex]);
-      })
-    );
-    const rowHeights = dataCells.map((row) =>
-      Math.max(1, ...row.map((cell) => cell.length))
-    );
+    // Process data cells: text cells get word-wrapped, element cells get sized
+    const dataCells: string[][][] = [];
+    const rowHeights: number[] = [];
 
-    // If the table has a fixed/expanded height, distribute extra vertical
-    // space evenly among data rows so the grid fills the available area.
-    if (
-      this.sizingMethod.y !== "content" &&
-      this.rows.length > 0
-    ) {
-      const contentAreaHeight = this.getContentAreaSize().getY();
-      // Calculate fixed overhead: top border + title + title sep + header + header sep + row seps + bottom border
-      let fixedHeight = 2; // top + bottom border
-      if (titleLines.length > 0) {
-        fixedHeight += titleLines.length + 1; // title rows + separator
-      }
-      if (headerHeight > 0) {
-        fixedHeight += headerHeight;
-        if (dataCells.length > 0) fixedHeight += 1; // header separator
-      }
-      if (this.showRowSeparators && dataCells.length > 1) {
-        fixedHeight += dataCells.length - 1; // row separators
-      }
+    for (let rowIdx = 0; rowIdx < this.rows.length; rowIdx++) {
+      const row = this.rows[rowIdx];
+      const rowCells: string[][] = [];
+      let maxHeight = 1;
 
-      const contentRowHeight = rowHeights.reduce((a, b) => a + b, 0);
-      const availableForRows = contentAreaHeight - fixedHeight;
-      if (availableForRows > contentRowHeight) {
-        // Target a uniform row height. Rows already taller than the
-        // target keep their content height; the extra space goes to
-        // the shorter rows.
-        const targetHeight = Math.floor(availableForRows / rowHeights.length);
-        let surplus = 0;
-        let shortRows = 0;
-        for (const h of rowHeights) {
-          if (h > targetHeight) {
-            surplus += h - targetHeight;
-          } else {
-            shortRows++;
-          }
-        }
-        // Redistribute: short rows share (available - tall rows' content)
-        const spaceForShort = availableForRows - rowHeights.reduce(
-          (acc, h) => acc + (h > targetHeight ? h : 0), 0
-        );
-        const perShort = shortRows > 0 ? Math.floor(spaceForShort / shortRows) : 0;
-        const shortRemainder = shortRows > 0 ? spaceForShort - perShort * shortRows : 0;
-        let shortIdx = 0;
-        for (let i = 0; i < rowHeights.length; i++) {
-          if (rowHeights[i] <= targetHeight) {
-            rowHeights[i] = perShort + (shortIdx < shortRemainder ? 1 : 0);
-            shortIdx++;
-          }
-          // Tall rows keep their content height
+      for (let colIdx = 0; colIdx < this.columns.length; colIdx++) {
+        const cellConfig = row.cells[colIdx];
+        const colWidth = this.resolvedColumnWidths[colIdx];
+
+        // Check if this cell has an element
+        const el = this.getElementCell(rowIdx, colIdx);
+        if (el) {
+          // Element cell: size it, use its height, put empty text in grid
+          el.setSize(new IntPoint(colWidth, 0));
+          const elHeight = Math.max(1, el.getSize().getY());
+          if (elHeight > maxHeight) maxHeight = elHeight;
+          rowCells.push([""]); // placeholder — element draws itself
+        } else {
+          // Text cell
+          const text = cellConfig
+            ? (cellConfig instanceof Element ? "" : (cellConfig as TableCellConfig).text || "")
+            : "";
+          const wrapped = this.wrapText(text, colWidth);
+          if (wrapped.length > maxHeight) maxHeight = wrapped.length;
+          rowCells.push(wrapped);
         }
       }
+
+      dataCells.push(rowCells);
+      rowHeights.push(maxHeight);
     }
 
-    // Build the grid
+    // Vertical expansion
+    if (this.sizingMethod.y !== "content" && this.rows.length > 0) {
+      this.expandRowHeights(rowHeights, titleLines.length, headerHeight, dataCells.length);
+    }
+
+    // Resize element cells to final row heights and position all element cells
+    this.positionElementCells(rowHeights, titleLines.length, headerHeight);
+
+    // Build the grid (element cell slots will be empty/spaces)
     this.cachedGrid = this.buildGrid(
       titleLines,
       headerCells,
@@ -171,6 +199,7 @@ export class TableElement extends Element {
     this.flagForRedraw();
     this.setSize(newSize);
     this.updateScrollShowing();
+    this.isProcessing = false;
   }
 
   protected drawOwnContent(offset: IntPoint): void {
@@ -194,6 +223,92 @@ export class TableElement extends Element {
   protected handleMouseLeave(): void {}
   protected handleUnregisterWithView(): void {}
   protected handleTransitionStart(): void {}
+
+  // --- Element cell helpers ---
+
+  private getElementCell(row: number, col: number): Element | null {
+    const found = this.elementCells.find(
+      (ec) => ec.row === row && ec.col === col
+    );
+    return found ? found.element : null;
+  }
+
+  private positionElementCells(
+    rowHeights: number[],
+    titleLineCount: number,
+    headerHeight: number
+  ): void {
+    for (const { element, row, col } of this.elementCells) {
+      const colWidth = this.resolvedColumnWidths[col];
+      const rowHeight = rowHeights[row];
+
+      // Set final size (width from column, height from row)
+      element.setSize(new IntPoint(colWidth, rowHeight));
+
+      // Calculate position within the table's content area
+      let xOffset = 1; // left border
+      for (let c = 0; c < col; c++) {
+        xOffset += this.resolvedColumnWidths[c] + 1; // column width + separator
+      }
+
+      let yOffset = 1; // top border
+      if (titleLineCount > 0) {
+        yOffset += titleLineCount + 1; // title rows + separator
+      }
+      if (headerHeight > 0) {
+        yOffset += headerHeight;
+        if (this.rows.length > 0) yOffset += 1; // header separator
+      }
+      for (let r = 0; r < row; r++) {
+        yOffset += rowHeights[r];
+        if (this.showRowSeparators) yOffset += 1;
+      }
+
+      element.setPosition(new IntPoint(xOffset, yOffset));
+    }
+  }
+
+  private expandRowHeights(
+    rowHeights: number[],
+    titleLineCount: number,
+    headerHeight: number,
+    numDataRows: number
+  ): void {
+    const contentAreaHeight = this.getContentAreaSize().getY();
+    let fixedHeight = 2; // top + bottom border
+    if (titleLineCount > 0) {
+      fixedHeight += titleLineCount + 1;
+    }
+    if (headerHeight > 0) {
+      fixedHeight += headerHeight;
+      if (numDataRows > 0) fixedHeight += 1;
+    }
+    if (this.showRowSeparators && numDataRows > 1) {
+      fixedHeight += numDataRows - 1;
+    }
+
+    const contentRowHeight = rowHeights.reduce((a, b) => a + b, 0);
+    const availableForRows = contentAreaHeight - fixedHeight;
+    if (availableForRows > contentRowHeight) {
+      const targetHeight = Math.floor(availableForRows / rowHeights.length);
+      let shortRows = 0;
+      for (const h of rowHeights) {
+        if (h <= targetHeight) shortRows++;
+      }
+      const spaceForShort = availableForRows - rowHeights.reduce(
+        (acc, h) => acc + (h > targetHeight ? h : 0), 0
+      );
+      const perShort = shortRows > 0 ? Math.floor(spaceForShort / shortRows) : 0;
+      const shortRemainder = shortRows > 0 ? spaceForShort - perShort * shortRows : 0;
+      let shortIdx = 0;
+      for (let i = 0; i < rowHeights.length; i++) {
+        if (rowHeights[i] <= targetHeight) {
+          rowHeights[i] = perShort + (shortIdx < shortRemainder ? 1 : 0);
+          shortIdx++;
+        }
+      }
+    }
+  }
 
   // --- Grid building ---
 
@@ -221,7 +336,6 @@ export class TableElement extends Element {
       for (const line of titleLines) {
         lines.push("│" + this.padText(line, innerWidth, this.titleAlign) + "│");
       }
-      // Title-to-headers/data separator
       lines.push(this.buildHorizontalLine("├", "─", "┬", "┤"));
     }
 
@@ -237,7 +351,6 @@ export class TableElement extends Element {
         }
         lines.push(row);
       }
-      // Header separator (only if there are data rows)
       if (dataCells.length > 0) {
         lines.push(this.buildHorizontalLine("├", "─", "┼", "┤"));
       }
@@ -251,15 +364,20 @@ export class TableElement extends Element {
       for (let lineIdx = 0; lineIdx < rowHeight; lineIdx++) {
         let row = "│";
         for (let col = 0; col < this.columns.length; col++) {
-          const text = rowData[col]?.[lineIdx] || "";
-          const align = this.columns[col].align || "start";
-          row += this.padText(text, this.resolvedColumnWidths[col], align);
+          // Element cells have empty text — the element draws itself
+          const isElementCell = this.getElementCell(rowIdx, col) !== null;
+          if (isElementCell) {
+            row += SPACE_CHAR.repeat(this.resolvedColumnWidths[col]);
+          } else {
+            const text = rowData[col]?.[lineIdx] || "";
+            const align = this.columns[col].align || "start";
+            row += this.padText(text, this.resolvedColumnWidths[col], align);
+          }
           row += "│";
         }
         lines.push(row);
       }
 
-      // Row separator (not after last row)
       if (this.showRowSeparators && rowIdx < dataCells.length - 1) {
         lines.push(this.buildHorizontalLine("├", "─", "┼", "┤"));
       }
@@ -330,7 +448,6 @@ export class TableElement extends Element {
     let usedWidth = 0;
     let expandCount = 0;
 
-    // First pass: absolute columns
     for (let i = 0; i < numCols; i++) {
       const col = this.columns[i];
       const type = col.widthType || "expand";
@@ -342,7 +459,6 @@ export class TableElement extends Element {
       }
     }
 
-    // Second pass: relative columns
     const afterAbsolute = availableWidth - usedWidth;
     let relativeTotal = 0;
     for (let i = 0; i < numCols; i++) {
@@ -359,7 +475,6 @@ export class TableElement extends Element {
       }
     }
 
-    // Third pass: expand columns — distribute remainder evenly
     if (expandCount > 0) {
       const remaining = availableWidth - usedWidth;
       const perExpand = Math.floor(remaining / expandCount);
@@ -397,7 +512,6 @@ export class TableElement extends Element {
     if (maxWidth <= 0) return [""];
     if (text === "") return [""];
 
-    // Handle explicit newlines first, then wrap each line
     const inputLines = text.split("\n");
     const result: string[] = [];
 
