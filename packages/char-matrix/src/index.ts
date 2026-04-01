@@ -40,3 +40,12 @@ export { throttledWarn } from "./utils/Logging";
 
 // Octant
 export { octantChar, octantFromGrid, octantFromPixels, OCTANT_LEFT, OCTANT_RIGHT, OCTANT_ROW } from "./utils/Octant";
+
+// Bitmap-to-octant rendering
+export { PixelBuffer, pixelBufferToOctant } from "./utils/BitmapOctant";
+
+// Big text (Unifont 8×16 → 4×4 octants)
+export { toBigChar, toBigText, parseHexGlyph } from "./utils/BigText";
+
+// Compact big text (Spleen 5×8 → 3×2 octants)
+export { toCompactBigChar, toCompactBigText, parseSpleenGlyph } from "./utils/BigTextCompact";
