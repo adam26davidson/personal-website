@@ -31,5 +31,6 @@
       "@adam26davidson/char-matrix-fx": ["./packages/char-matrix-fx/src/index.ts"]
     }
   },
-  "include": ["src", "packages/*/src"]
+  "include": ["src", "packages/*/src"],
+  "exclude": ["packages/*/src/**/*.test.ts"]
 }
