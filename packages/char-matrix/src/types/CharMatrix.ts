@@ -1,6 +1,7 @@
 import { SPACE_CHAR } from "../constants";
 import { throttledWarn } from "../utils/Logging";
 import { IntPoint, ZERO_POINT } from "./IntPoint";
+import { X, Y } from "./Axes";
 
 export class CharMatrix {
   private matrix: string[][];
@@ -78,12 +79,17 @@ export class CharMatrix {
     fn: (char: string, location: IntPoint) => string,
     other: CharMatrix
   ) {
-    const size = this.getSize();
-    for (let y = 0; y < size.getY(); y++) {
-      for (let x = 0; x < size.getX(); x++) {
-        const location = new IntPoint(x, y);
-        const char = this.getChar(location);
-        other.setChar(location, fn(char, location));
+    const rows = this.matrix.length;
+    const cols = this.matrix[0]?.length || 0;
+    const otherRaw = other.getRawMatrix();
+    const loc = new IntPoint(0, 0);
+    for (let y = 0; y < rows; y++) {
+      const srcRow = this.matrix[y];
+      const dstRow = otherRaw[y];
+      loc.set(Y, y);
+      for (let x = 0; x < cols; x++) {
+        loc.set(X, x);
+        dstRow[x] = fn(srcRow[x], loc);
       }
     }
   }
