@@ -17,10 +17,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "dist",
-    "baseUrl": ".",
-    "paths": {
-      "@adam26davidson/char-matrix": ["../char-matrix/src/index.ts"]
-    }
+    "rootDir": "src"
   },
-  "include": ["src", "src/**/*.json"]
+  "include": ["src"]
 }
