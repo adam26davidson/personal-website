@@ -21,7 +21,6 @@ export default class TextElement extends Element {
 
   constructor(config: TextElementConfig) {
     super(config);
-    console.log("configuring text element", config);
     this.setBaseText(config.text);
 
     this.hoverTextTransform = config.hoverTransform || "none";
@@ -60,7 +59,6 @@ export default class TextElement extends Element {
   protected handleTransitionStart(): void {}
 
   protected drawOwnContent(offset: IntPoint) {
-    console.log("drawing text element content for", this.key);
     const text = this.processedText;
     const lines = text.split("\n");
     const totalOffset = this.getContentOffset().add(offset);
@@ -78,9 +76,7 @@ export default class TextElement extends Element {
   // children will be inserted in place of the <child placeholder> placeholders
   // add blocking spaces for the children's width, and new lines for the children's height
   protected reprocessContent() {
-    console.log("reprocessing text element content for", this.key);
     const text = this.addNewLinesToTemplateText();
-    console.log("text", text);
     const lines = this.addSpacesAndNewLinesForChildren(text);
     this.processedText = lines.join("\n");
     this.contentSize = new IntPoint(

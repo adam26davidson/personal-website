@@ -20,7 +20,6 @@ export abstract class ParentElement {
   abstract getStage(): string;
 
   protected resizeChildren() {
-    console.log("resizing children");
     const childSizes = this.children.map((c) => c.getSize().copy());
     const totalBoundarySize = this.getTotalBoundarySize();
     for (let i = 0; i < this.children.length; i++) {
@@ -28,7 +27,6 @@ export abstract class ParentElement {
       const newSize = child.getSize().copy();
       for (const a of AXES) {
         if (child.getSizingMethod()[a] === "relative") {
-          console.log("resizing relative child", child.getKey());
           const contentSize = this.getSize().get(a) - totalBoundarySize.get(a);
           newSize.set(a, contentSize * child.getRelativeSize().get(a));
         }
@@ -51,7 +49,6 @@ export abstract class ParentElement {
       for (let i = 0; i < this.children.length; i++) {
         const c = this.children[i];
         if (c.getSizingMethod()[a] === "expand") {
-          console.log("resizing expanding child", c.getKey());
           const newSize = c.getSize().copy();
           newSize.set(a, sizePerChild);
           childSizes[i].set(a, sizePerChild);
