@@ -61,7 +61,6 @@ export abstract class Element extends ElementInteraction {
   // --- child management ---
 
   public setChildren(children: Element[]) {
-    console.log("setting children", children, "for", this.key);
     this.children.forEach((child) => child.unregisterWithView());
     this.children = children;
     this.children.forEach((child) => {
@@ -106,7 +105,6 @@ export abstract class Element extends ElementInteraction {
         const exitedChildren = this.children.filter(
           (child) => child.getStage() === "exited"
         );
-        console.log("pruning exited children", exitedChildren);
         exitedChildren.forEach((child) => child.unregisterWithView());
         this.children = newChildren;
         this.reprocessContent();
@@ -130,7 +128,6 @@ export abstract class Element extends ElementInteraction {
     this.handleUnregisterWithView();
     this.view.unregisterElement(this);
     this.isOnView = false;
-    console.log("unregistering element", this.key);
     this.children.forEach((child) => child.unregisterWithView());
   }
 
@@ -168,7 +165,6 @@ export abstract class Element extends ElementInteraction {
     type: "enter" | "exit",
     onComplete: () => void = () => {}
   ) {
-    console.log("starting transition", type, "for", this.key);
     this.handleTransitionStart(type);
     this.addOnTransition(type, onComplete);
     this.stage = type === "enter" ? "entering" : "exiting";
@@ -208,7 +204,6 @@ export abstract class Element extends ElementInteraction {
     let otherHasCompleted = false;
     return () => {
       if (otherHasCompleted) {
-        console.log("transition complete", this.key);
         funcs.forEach((func) => func());
         this.stage = nextStage;
       } else {

@@ -96,8 +96,6 @@ export abstract class ElementBase extends ParentElement {
     if (this.size.equals(size)) {
       return;
     }
-    console.log("setting size", size, "for", this.key);
-
     const oldSize = this.size.copy();
     this.size = size;
 

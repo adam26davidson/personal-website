@@ -52,7 +52,6 @@ export class CharMatrix {
   }
 
   public clear() {
-    console.log("clearing matrix");
     const size = this.getSize();
     for (let y = 0; y < size.getY(); y++) {
       for (let x = 0; x < size.getX(); x++) {
@@ -66,7 +65,6 @@ export class CharMatrix {
    * @param newSize the new size of the matrix
    */
   public resize(newSize: IntPoint) {
-    console.log("resizing matrix to", newSize.getX(), newSize.getY());
     this.matrix = new Array(newSize.getY())
       .fill(null)
       .map(() => new Array(newSize.getX()).fill(SPACE_CHAR));

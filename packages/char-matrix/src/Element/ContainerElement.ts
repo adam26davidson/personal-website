@@ -29,11 +29,9 @@ export class ContainerElement extends Element {
   }
 
   protected reprocessContent() {
-    console.log("reprocessing content for container element", this.key);
     const ma = this.mainAxis; // main axis
     const sa = this.secondaryAxis; // secondary axis
     const size = this.calculateSize();
-    console.log("calculated size", size, "for", this.key);
 
     const totalBoundary = this.getTotalBoundarySize();
     const innerSizeM = size.get(ma) - totalBoundary.get(ma);
@@ -71,7 +69,6 @@ export class ContainerElement extends Element {
       eOffset.set(ma, offsetM);
       eOffset.set(sa, offsetS);
 
-      console.log("setting position", eOffset, "for", e.getKey());
       e.setPosition(eOffset);
 
       offsetM += eSizeM + this.spacing;
@@ -100,9 +97,7 @@ export class ContainerElement extends Element {
 
   private calculateSize() {
     const size = this.getSize().copy();
-    //console.log("size in calculateSize", size, "for", this.key);
     const boundarySize = this.getTotalBoundarySize();
-    //console.log("boundary size", boundarySize);
     if (this.sizingMethod[this.mainAxis] === "content") {
       size.set(
         this.mainAxis,
