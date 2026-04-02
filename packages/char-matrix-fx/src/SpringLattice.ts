@@ -121,7 +121,7 @@ class SpringLattice {
     this.attractor_on = false;
   }
 
-  async update() {
+  update() {
     const time_delta = 1.0 / 20;
     // update positions and velocities
     for (let i = 0; i < this.num_rows; i++) {
