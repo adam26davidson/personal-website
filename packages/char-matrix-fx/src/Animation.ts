@@ -76,15 +76,17 @@ export abstract class Animation {
   }
 
   protected clearAnimationLayer(offset: IntPoint) {
+    const z = this.element.getZIndex();
     this.element.forEachVisiblePoint((p) => {
-      this.view.setAnimationLayerChar(this.backgroundChar, p, offset);
+      this.view.setAnimationLayerChar(this.backgroundChar, p, offset, z);
     });
   }
 
   protected syncAnimationLayerToContent(offset: IntPoint) {
+    const z = this.element.getZIndex();
     this.element.forEachVisiblePoint((p) => {
       const contentChar = this.view.getContentLayerChar(p, offset);
-      this.view.setAnimationLayerChar(contentChar, p, offset);
+      this.view.setAnimationLayerChar(contentChar, p, offset, z);
     });
   }
 }

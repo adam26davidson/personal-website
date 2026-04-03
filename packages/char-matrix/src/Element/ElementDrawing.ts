@@ -24,10 +24,10 @@ export abstract class ElementDrawing extends ElementLayout {
   public getScrollOffset = () => this.scrollOffset;
 
   protected drawChar(char: string, p: IntPoint, o: IntPoint = ZERO_POINT) {
-    this.view.setContentLayerChar(char, p, o);
+    this.view.setContentLayerChar(char, p, o, this.zIndex);
     const hasAnimation = this.animationHandler?.hasActiveAnimation() ?? false;
     if (!hasAnimation && this.stage !== "queued") {
-      this.view.setAnimationLayerChar(char, p, o);
+      this.view.setAnimationLayerChar(char, p, o, this.zIndex);
     }
   }
 

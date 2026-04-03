@@ -124,7 +124,8 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
   public setContentLayerChar(
     char: string,
     location: IntPoint,
-    offset: IntPoint = ZERO_POINT
+    offset: IntPoint = ZERO_POINT,
+    _zIndex: number = 0
   ) {
     this.cm.setChar(location, char, offset);
   }
@@ -132,7 +133,8 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
   public setAnimationLayerChar(
     char: string,
     location: IntPoint,
-    offset: IntPoint = ZERO_POINT
+    offset: IntPoint = ZERO_POINT,
+    _zIndex: number = 0
   ) {
     this.am.setChar(location, char, offset);
   }
