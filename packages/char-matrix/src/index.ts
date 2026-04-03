@@ -16,7 +16,7 @@ export type { ElementAnimationHandler } from "./interfaces/ElementAnimationHandl
 export type { SurfaceTransform } from "./interfaces/SurfaceTransform";
 
 // Types
-export { CharMatrix } from "./types/CharMatrix";
+export { CharMatrix, FULLWIDTH_CONTINUATION } from "./types/CharMatrix";
 export { IntPoint, ZERO_POINT } from "./types/IntPoint";
 export { NormPoint } from "./types/NormPoint";
 export { RealPoint } from "./types/RealPoint";
@@ -36,6 +36,7 @@ export {
 
 // Utilities
 export { charsToPixelsX, charsToPixelsY, toBold, toBoldChar, toNotBoldChar, getPostIdFromTitle } from "./utils/MiscUtils";
+export { isFullwidth } from "./utils/fullwidthRanges";
 export { throttledWarn } from "./utils/Logging";
 
 // Octant

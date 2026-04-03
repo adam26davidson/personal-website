@@ -1,8 +1,30 @@
 import { SPACE_CHAR } from "../constants";
 import { toBold } from "../utils/MiscUtils";
+import { isFullwidth } from "../utils/fullwidthRanges";
 import { AXES } from "../types/Axes";
 import { IntPoint } from "../types/IntPoint";
 import { Element, ElementConfig } from "./Element";
+
+/** Count visual cell width of a string (fullwidth chars = 2, narrow = 1). */
+function visualWidth(str: string): number {
+  let w = 0;
+  for (const ch of str) {
+    w += isFullwidth(ch) ? 2 : 1;
+  }
+  return w;
+}
+
+/** Build a map from visual column index to [charIndex, isSecondHalf]. */
+function visualColumns(line: string): string[] {
+  const cols: string[] = [];
+  for (const ch of line) {
+    cols.push(ch);
+    if (isFullwidth(ch)) {
+      cols.push(""); // continuation slot
+    }
+  }
+  return cols;
+}
 
 const CHILD_PLACEHOLDER = "XxcPzi6xKg";
 
@@ -61,12 +83,14 @@ export default class TextElement extends Element {
   protected drawOwnContent(offset: IntPoint) {
     const text = this.processedText;
     const lines = text.split("\n");
+    // Pre-compute visual column maps for each line
+    const lineColumns = lines.map(visualColumns);
     const totalOffset = this.getContentOffset().add(offset);
     this.forEachVisiblePointInContentArea((p) => {
-      const line: string = lines[p.getY()];
-      if (!line) return;
-      const char = [...line][p.getX()];
-      if (!char) return;
+      const cols = lineColumns[p.getY()];
+      if (!cols) return;
+      const char = cols[p.getX()];
+      if (!char) return; // empty string = continuation cell or out of bounds
       this.drawChar(char, p, totalOffset);
     });
   }
@@ -80,7 +104,7 @@ export default class TextElement extends Element {
     const lines = this.addSpacesAndNewLinesForChildren(text);
     this.processedText = lines.join("\n");
     this.contentSize = new IntPoint(
-      Math.max(...lines.map((line) => [...line].length)),
+      Math.max(...lines.map((line) => visualWidth(line))),
       lines.length
     );
 
@@ -112,7 +136,7 @@ export default class TextElement extends Element {
       const newLineParts: string[] = [];
       for (let i = 0; i < lineParts.length - 1; i++) {
         const linePart = lineParts[i];
-        xOffset += [...linePart].length;
+        xOffset += visualWidth(linePart);
         newLineParts.push(linePart);
         const child = children[childIndex];
         child.setPosition(new IntPoint(xOffset, yOffset));
@@ -166,13 +190,39 @@ export default class TextElement extends Element {
         const words = lineParts[i].split(SPACE_CHAR);
         const newWords: string[] = [];
         for (const word of words) {
-          const wordLength = [...word].length;
-          if (currentWidth + wordLength > maxWidth) {
+          const wordLength = visualWidth(word);
+          const availableWidth = maxWidth - currentWidth;
+          if (wordLength <= availableWidth) {
+            // Word fits on current line
+            newWords.push(word);
+            currentWidth += wordLength + 1;
+          } else if (wordLength <= maxWidth - initialLineWidth) {
+            // Word fits on a new line
             newWords.push(`\n${word}`);
             currentWidth = initialLineWidth + wordLength + 1;
           } else {
-            newWords.push(word);
-            currentWidth += wordLength + 1;
+            // Word is too long for any line — break it character by character
+            let remaining = word;
+            let first = true;
+            while (remaining.length > 0) {
+              const lineAvail = first ? availableWidth : maxWidth - initialLineWidth;
+              let taken = "";
+              let takenWidth = 0;
+              for (const ch of remaining) {
+                const chW = isFullwidth(ch) ? 2 : 1;
+                if (takenWidth + chW > lineAvail && takenWidth > 0) break;
+                taken += ch;
+                takenWidth += chW;
+              }
+              if (first && takenWidth <= availableWidth) {
+                newWords.push(taken);
+              } else {
+                newWords.push(`\n${taken}`);
+              }
+              remaining = remaining.slice(taken.length);
+              currentWidth = initialLineWidth + takenWidth + 1;
+              first = false;
+            }
           }
         }
         currentWidth -= 1; // last word doesn't have a space after it

@@ -1,4 +1,4 @@
-import { Element, IntPoint, DEFAULT_BACKGROUND_CHAR } from "@adam26davidson/char-matrix";
+import { Element, IntPoint, DEFAULT_BACKGROUND_CHAR, FULLWIDTH_CONTINUATION } from "@adam26davidson/char-matrix";
 import type { RenderTarget } from "@adam26davidson/char-matrix";
 import { Animation, AnimationUse } from "./Animation";
 import TOP_SIMILAR from "./topSimilar";
@@ -13,7 +13,6 @@ export abstract class HeadBasedAnimation extends Animation {
   protected tailLength: number;
   protected randomizationRange: number;
   protected headSpeed: number;
-  protected use: AnimationUse;
 
   constructor(
     element: Element,
@@ -26,14 +25,13 @@ export abstract class HeadBasedAnimation extends Animation {
     },
     onComplete: () => void = () => {}
   ) {
-    super(element, view, onComplete);
+    super(element, view, config.use, onComplete);
 
     this.headDistance = 0;
 
     this.randomizationRange = config.randomizationRange;
     this.headSpeed = config.headSpeed;
     this.tailLength = config.tailLength;
-    this.use = config.use;
     this.backgroundChar =
       element.getParent()?.getBackgroundChar() || DEFAULT_BACKGROUND_CHAR;
   }
@@ -79,6 +77,7 @@ export abstract class HeadBasedAnimation extends Animation {
     o: IntPoint
   ): string {
     const baseChar = this.view.getContentLayerChar(p, o);
+    if (baseChar === FULLWIDTH_CONTINUATION) return baseChar;
     if (!(baseChar in TOP_SIMILAR) || baseChar === "\u00a0") return baseChar;
 
     let index = 0;

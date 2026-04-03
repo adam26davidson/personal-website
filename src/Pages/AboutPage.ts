@@ -21,6 +21,13 @@ export class AboutPage extends ContentPage {
       this.view
     );
 
+    const japaneseTestElement = new ParagraphElement(
+      "japaneseTest",
+      "これはテストです。ひらがなとカタカナの表示をテストしています。★☆♠♣",
+      1,
+      this.view
+    );
+
     const aboutThisSiteLink = new LinkElement(
       "aboutThisSiteLink",
       "About This Site ->",
@@ -48,6 +55,7 @@ export class AboutPage extends ContentPage {
     content.setChildren([
       headerElement,
       textElement,
+      japaneseTestElement,
       aboutThisSiteLink,
       professionalExperienceLink,
     ]);
