@@ -44,6 +44,7 @@ export abstract class Animation {
 
   public runStep(o: IntPoint): boolean {
     if (this.isComplete()) {
+      this.clearAnimationLayer(o);
       this.onComplete();
       return true;
     }
