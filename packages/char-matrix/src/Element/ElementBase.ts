@@ -36,6 +36,8 @@ export interface ElementConfig {
   animationHandler?: import("../interfaces/ElementAnimationHandler").ElementAnimationHandler;
   entranceTiming?: "parallel" | "series";
   exitTiming?: "parallel" | "series";
+  /** Draw priority. Higher values render on top of lower values. Default: 0 */
+  zIndex?: number;
 }
 
 export abstract class ElementBase extends ParentElement {
@@ -51,12 +53,14 @@ export abstract class ElementBase extends ParentElement {
   protected offset: IntPoint = new IntPoint(0, 0);
   protected contentSize: IntPoint = new IntPoint(0, 0);
   protected stage: ElementStage = "queued";
+  protected zIndex: number;
 
   constructor(config: ElementConfig) {
     super();
     this.key = config.key;
     this.view = config.view;
     this.parent = null;
+    this.zIndex = config.zIndex ?? 0;
 
     this.offset = new IntPoint(config.xOffset || 0, config.yOffset || 0);
 
@@ -80,6 +84,7 @@ export abstract class ElementBase extends ParentElement {
   public getOffset = () => this.offset;
   public getKey = () => this.key;
   public getStage = () => this.stage;
+  public getZIndex = () => this.zIndex;
   public getSizingMethod = () => this.sizingMethod;
   public getParent = () => this.parent;
 

@@ -13,7 +13,8 @@ export interface RenderTarget {
   setContentLayerChar(
     char: string,
     location: IntPoint,
-    offset?: IntPoint
+    offset?: IntPoint,
+    zIndex?: number
   ): void;
 
   getContentLayerChar(location: IntPoint, offset?: IntPoint): string;
@@ -21,7 +22,8 @@ export interface RenderTarget {
   setAnimationLayerChar(
     char: string,
     location: IntPoint,
-    offset?: IntPoint
+    offset?: IntPoint,
+    zIndex?: number
   ): void;
 
   // --- Layout info ---

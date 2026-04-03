@@ -44,6 +44,7 @@ export abstract class HeadBasedAnimation extends Animation {
     if (this.use === "entrance" && this.headDistance === 0) {
       this.clearAnimationLayer(o);
     }
+    const z = this.element.getEffectiveZIndex();
     this.element.forEachVisiblePoint((p) => {
       const distanceBehindHead = this.getDistanceBehindHead(p);
       let char = this.view.getContentLayerChar(p, o);
@@ -60,7 +61,7 @@ export abstract class HeadBasedAnimation extends Animation {
         // point is behind the tail in exit animation
         char = this.backgroundChar;
       }
-      this.view.setAnimationLayerChar(char, p, o);
+      this.view.setAnimationLayerChar(char, p, o, z);
     });
   }
 

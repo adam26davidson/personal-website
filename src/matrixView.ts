@@ -1,7 +1,6 @@
 import {
   SizingMethod,
   SurfaceTransform,
-  CharMatrix,
   IntPoint,
   ZERO_POINT,
   Y,
@@ -15,6 +14,7 @@ import {
   ContainerElement,
   ParentElement,
   CursorType,
+  RenderTargetBufferManager,
 } from "@adam26davidson/char-matrix";
 import { ReactRenderTarget } from "@adam26davidson/char-matrix-react";
 import { SpringLattice } from "@adam26davidson/char-matrix-fx";
@@ -36,9 +36,7 @@ type MouseVoveEvent = { x: number; y: number };
 class MatrixView extends ParentElement implements ReactRenderTarget {
   private size: IntPoint = ZERO_POINT;
   private pixelOffset: IntPoint = ZERO_POINT;
-  private am: CharMatrix = new CharMatrix(ZERO_POINT); // animation matrix
-  private cm: CharMatrix = new CharMatrix(ZERO_POINT); // content matrix
-  private fm: CharMatrix = new CharMatrix(ZERO_POINT); // final matrix
+  private buffers: RenderTargetBufferManager = new RenderTargetBufferManager(ZERO_POINT);
   private surfaceTransforms: SurfaceTransform[] = [];
   private isInitialized: boolean = false;
   private springLattice: SpringLattice = new SpringLattice();
@@ -79,9 +77,7 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
 
     console.log("initializing matrix with", this.size.getX(), this.size.getY());
 
-    this.cm.resize(this.size);
-    this.am.resize(this.size);
-    this.fm.resize(this.size);
+    this.buffers.resize(this.size);
 
     this.isInitialized = true;
     this.matrixController.initialize();
@@ -118,27 +114,29 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
     location: IntPoint,
     offset: IntPoint = ZERO_POINT
   ) {
-    return this.cm.getChar(location, offset);
+    return this.buffers.getContentLayerChar(location, offset);
   }
 
   public setContentLayerChar(
     char: string,
     location: IntPoint,
-    offset: IntPoint = ZERO_POINT
+    offset: IntPoint = ZERO_POINT,
+    zIndex: number = 0
   ) {
-    this.cm.setChar(location, char, offset);
+    this.buffers.setContentLayerChar(char, location, offset, zIndex);
   }
 
   public setAnimationLayerChar(
     char: string,
     location: IntPoint,
-    offset: IntPoint = ZERO_POINT
+    offset: IntPoint = ZERO_POINT,
+    zIndex: number = 0
   ) {
-    this.am.setChar(location, char, offset);
+    this.buffers.setAnimationLayerChar(char, location, offset, zIndex);
   }
 
   public handleChildResize(): void {
-    this.cm.clear();
+    this.buffers.clearContentLayer();
   }
 
   public getSizingMethod(): { x: SizingMethod; y: SizingMethod } {
@@ -187,14 +185,14 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
     // STEP 2: Handle events
     this.processEvents();
 
-    // STEP 3: update content matrix
+    // STEP 3: Reset z-buffers for new frame
+    this.buffers.resetZBuffers();
+
+    // STEP 4: update content matrix
     this.rootElement.draw(ZERO_POINT);
 
-    // STEP 4: update animation matrix
+    // STEP 5: update animation matrix
     this.rootElement.runAnimationStep(ZERO_POINT);
-
-    // throttledLog("final matrix:");
-    // throttledLog(this.fm.getRawMatrix());
   }
 
   public addSurfaceTransform(transform: SurfaceTransform): void {
@@ -202,18 +200,15 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
   }
 
   public getSurfaceMatrix() {
+    this.buffers.compositeLayers();
+
     if (this.surfaceTransforms.length === 0) {
-      // No transforms — use animation matrix directly (preserves existing behavior)
-      return this.am.getRawMatrix();
+      return this.buffers.getSurfaceBuffer().getRawMatrix();
     }
 
-    let source = this.am;
-    for (const transform of this.surfaceTransforms) {
-      transform.transform(source, this.fm, this.size);
-      source = this.fm;
-    }
-
-    return this.fm.getRawMatrix();
+    return this.buffers
+      .applyTransforms(this.surfaceTransforms)
+      .getRawMatrix();
   }
 
   public updateReactNodeConfig(key: string, reactNode: ReactNodeConfig) {
@@ -328,9 +323,7 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
     const size = this.calculateDimensions(x, y);
     if (!size.equals(this.size)) {
       const isMobile = size.getX() < MOBILE_WIDTH;
-      this.cm.resize(size);
-      this.am.resize(size);
-      this.fm.resize(size);
+      this.buffers.resize(size);
       this.springLattice.resize(
         x,
         y,
