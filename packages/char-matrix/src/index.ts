@@ -48,6 +48,10 @@ export { PixelBuffer, pixelBufferToOctant } from "./utils/BitmapOctant";
 // Big text (Unifont 8×16 → 4×4 octants)
 export { toBigChar, toBigText, parseHexGlyph } from "./utils/BigText";
 
+// Full Unifont glyph registry (Planes 0–1)
+export { getUnifontGlyph } from "./utils/UnifontRegistry";
+export type { UnifontGlyph } from "./utils/UnifontRegistry";
+
 // Compact big text (Spleen 5×8 → 3×2 octants)
 export { toCompactBigChar, toCompactBigText, parseSpleenGlyph } from "./utils/BigTextCompact";
 
