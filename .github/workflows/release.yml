@@ -47,8 +47,8 @@ jobs:
 
       - name: Set validate status on version PR
         run: |
-          SHA=$(gh api repos/${{ github.repository }}/git/ref/heads/changeset-release/main --jq '.object.sha' 2>/dev/null) || true
-          if [ -n "$SHA" ]; then
+          SHA=$(gh api repos/${{ github.repository }}/git/ref/heads/changeset-release/main --jq '.object.sha') || true
+          if [ -n "$SHA" ] && echo "$SHA" | grep -qE '^[0-9a-f]{40}$'; then
             gh api -X POST repos/${{ github.repository }}/statuses/$SHA \
               -f state="success" \
               -f context="validate" \
