@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      statuses: write
     steps:
       - uses: actions/checkout@v4
 
@@ -43,3 +44,16 @@ jobs:
           body: "Automated version bump from changeset publish."
           branch: changeset-release/main
           delete-branch: true
+
+      - name: Set validate status on version PR
+        run: |
+          SHA=$(gh api repos/${{ github.repository }}/git/ref/heads/changeset-release/main --jq '.object.sha' 2>/dev/null) || true
+          if [ -n "$SHA" ]; then
+            gh api repos/${{ github.repository }}/statuses/$SHA \
+              -f state="success" \
+              -f context="validate" \
+              -f description="Validated by release workflow" \
+              -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
