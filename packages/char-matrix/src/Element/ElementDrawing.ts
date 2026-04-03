@@ -23,15 +23,21 @@ export abstract class ElementDrawing extends ElementLayout {
 
   public getScrollOffset = () => this.scrollOffset;
 
+  /** The effective z-index for this element, accounting for parent inheritance. */
+  protected effectiveZIndex: number = 0;
+  public getEffectiveZIndex = () => this.effectiveZIndex;
+
   protected drawChar(char: string, p: IntPoint, o: IntPoint = ZERO_POINT) {
-    this.view.setContentLayerChar(char, p, o, this.zIndex);
+    this.view.setContentLayerChar(char, p, o, this.effectiveZIndex);
     const hasAnimation = this.animationHandler?.hasActiveAnimation() ?? false;
     if (!hasAnimation && this.stage !== "queued") {
-      this.view.setAnimationLayerChar(char, p, o, this.zIndex);
+      this.view.setAnimationLayerChar(char, p, o, this.effectiveZIndex);
     }
   }
 
-  public draw(offset: IntPoint): void {
+  public draw(offset: IntPoint, inheritedZIndex: number = 0): void {
+    this.effectiveZIndex = Math.max(this.zIndex, inheritedZIndex);
+
     const fullOffset = offset.add(this.scrollOffset);
     const fullContentOffset = offset.add(this.getContentOffset());
     this.fullContentOffset = fullContentOffset;
@@ -45,7 +51,7 @@ export abstract class ElementDrawing extends ElementLayout {
       this.drawOwnContent(fullOffset);
     }
     this.children.forEach((child) =>
-      child.draw(fullOffset.add(child.getOffset()))
+      child.draw(fullOffset.add(child.getOffset()), this.effectiveZIndex)
     );
 
     this.mustRedraw = false;

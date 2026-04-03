@@ -44,7 +44,7 @@ export abstract class HeadBasedAnimation extends Animation {
     if (this.use === "entrance" && this.headDistance === 0) {
       this.clearAnimationLayer(o);
     }
-    const z = this.element.getZIndex();
+    const z = this.element.getEffectiveZIndex();
     this.element.forEachVisiblePoint((p) => {
       const distanceBehindHead = this.getDistanceBehindHead(p);
       let char = this.view.getContentLayerChar(p, o);
