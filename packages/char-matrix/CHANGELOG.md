@@ -1,5 +1,13 @@
 # @adam26davidson/char-matrix
 
+## 0.0.7
+
+### Patch Changes
+
+- 8931350: Support bold digits in `toBold()` and render bold characters with their own distinct Unifont glyphs in `toBigText()`. Previously bold characters were mapped back to ASCII equivalents; now Mathematical Bold letters and digits (U+1D400–U+1D7D7) use their own heavier Unifont bitmaps when available, with ASCII fallback.
+- 183605f: Add full Unifont glyph data for Planes 0 and 1, enabling `toBigText()` to render any Unicode character as octant block art. Previously only printable ASCII was supported. Includes a prebuild script that generates TypeScript data from the bundled `.hex` source files, a lazy-loading `UnifontRegistry`, and mixed half-width/full-width glyph support in `toBigText()`.
+- 123804e: Add per-cell z-index support for element draw priority. Elements with higher `zIndex` render on top of elements with lower values, regardless of draw order. The z-buffer prevents lower-z animations from bleeding through higher-z content during the compositing step.
+
 ## 0.0.6
 
 ### Patch Changes
