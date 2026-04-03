@@ -49,7 +49,7 @@ jobs:
         run: |
           SHA=$(gh api repos/${{ github.repository }}/git/ref/heads/changeset-release/main --jq '.object.sha' 2>/dev/null) || true
           if [ -n "$SHA" ]; then
-            gh api repos/${{ github.repository }}/statuses/$SHA \
+            gh api -X POST repos/${{ github.repository }}/statuses/$SHA \
               -f state="success" \
               -f context="validate" \
               -f description="Validated by release workflow" \
