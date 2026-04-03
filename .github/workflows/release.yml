@@ -28,7 +28,9 @@ jobs:
         run: npx changeset version
 
       - name: Publish packages
-        run: npx changeset publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          npx changeset publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
