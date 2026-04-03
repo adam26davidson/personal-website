@@ -37,12 +37,18 @@ describe("toBigChar", () => {
   });
 
   it("returns space-filled grid for unknown character", () => {
-    const result = toBigChar("\u9999"); // unlikely to be in ASCII subset
+    const result = toBigChar("\u{2FFFE}"); // Plane 2 — not in Plane 0/1 registry
     for (const row of result) {
       for (const char of [...row]) {
         expect(char).toBe(" ");
       }
     }
+  });
+
+  it("renders non-ASCII Unifont characters", () => {
+    const result = toBigChar("\u2600"); // ☀ — should now resolve from registry
+    const hasPixels = result.some((row) => [...row].some((ch) => ch !== " "));
+    expect(hasPixels).toBe(true);
   });
 });
 

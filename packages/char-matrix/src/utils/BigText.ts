@@ -1,4 +1,5 @@
 import { PixelBuffer, pixelBufferToOctant } from "./BitmapOctant";
+import { getUnifontGlyph } from "./UnifontRegistry";
 
 /**
  * Map a Unicode codepoint to the ASCII codepoint whose Unifont glyph
@@ -19,6 +20,7 @@ function toAsciiCodepoint(codepoint: number): number {
 
 /**
  * Bundled Unifont hex data for printable ASCII (U+0020–U+007E).
+ * Kept inline for fast zero-parse access to the most common characters.
  * Each entry is codepoint:hex where hex is 32 hex chars (8×16 bitmap).
  */
 const ASCII_HEX: Record<number, string> = {
@@ -119,45 +121,67 @@ const ASCII_HEX: Record<number, string> = {
   0x7e: "00000031494600000000000000000000",
 };
 
-/** Width of Unifont half-width glyphs in pixels */
-const GLYPH_WIDTH = 8;
-/** Height of Unifont glyphs in pixels */
+/** Height of Unifont glyphs in pixels (always 16) */
 const GLYPH_HEIGHT = 16;
 
 /**
- * Parse a Unifont hex string (32 hex chars for 8×16 bitmap) into
- * a 16×8 boolean grid where true = pixel on.
+ * Parse a Unifont hex string into a boolean pixel grid.
+ * Handles both 8×16 (32 hex chars) and 16×16 (64 hex chars) glyphs.
  */
 export function parseHexGlyph(hex: string): boolean[][] {
+  const isWide = hex.length === 64;
+  const bytesPerRow = isWide ? 2 : 1;
+  const pixelWidth = isWide ? 16 : 8;
   const grid: boolean[][] = [];
+
   for (let row = 0; row < GLYPH_HEIGHT; row++) {
-    const byte = parseInt(hex.slice(row * 2, row * 2 + 2), 16);
     const bits: boolean[] = [];
-    for (let bit = 7; bit >= 0; bit--) {
-      bits.push(((byte >> bit) & 1) === 1);
+    for (let b = 0; b < bytesPerRow; b++) {
+      const byteVal = parseInt(hex.slice((row * bytesPerRow + b) * 2, (row * bytesPerRow + b) * 2 + 2), 16);
+      for (let bit = 7; bit >= 0; bit--) {
+        bits.push(((byteVal >> bit) & 1) === 1);
+      }
     }
-    grid.push(bits);
+    // Ensure consistent width
+    grid.push(bits.slice(0, pixelWidth));
   }
   return grid;
 }
 
+interface ResolvedGlyph {
+  grid: boolean[][];
+  width: number;
+}
+
 /**
- * Get the pixel grid for a character, or null if unknown.
+ * Get the pixel grid for a character.
+ * Checks inline ASCII table first, then falls back to the full Unifont registry.
  */
-function getGlyph(char: string): boolean[][] | null {
+function getGlyph(char: string): ResolvedGlyph | null {
   const rawCodepoint = char.codePointAt(0) ?? 0;
   const codepoint = toAsciiCodepoint(rawCodepoint);
-  const hex = ASCII_HEX[codepoint];
-  if (!hex) return null;
-  return parseHexGlyph(hex);
+
+  // Fast path: inline ASCII glyphs (always 8px wide)
+  const asciiHex = ASCII_HEX[codepoint];
+  if (asciiHex) {
+    return { grid: parseHexGlyph(asciiHex), width: 8 };
+  }
+
+  // Full Unifont registry lookup
+  const unifontGlyph = getUnifontGlyph(codepoint);
+  if (unifontGlyph) {
+    return { grid: parseHexGlyph(unifontGlyph.hex), width: unifontGlyph.width };
+  }
+
+  return null;
 }
 
 /**
  * Render a string as big text by compositing all character bitmaps
  * into a single pixel buffer, then converting to octants.
  *
- * Characters are placed at true pixel width (8px) with configurable
- * spacing, so adjacent glyphs can share octant cells at boundaries.
+ * Supports any character in Unifont Planes 0–1, including
+ * mixed half-width (8px) and full-width (16px) glyphs.
  *
  * @param text The string to render
  * @param spacing Extra pixels between characters (default 0)
@@ -169,15 +193,27 @@ export function toBigText(text: string, spacing: number = 0): string[] {
   }
 
   const chars = [...text];
-  const advance = GLYPH_WIDTH + spacing;
-  const totalWidth = chars.length * advance - spacing;
-  const buf = new PixelBuffer(totalWidth, GLYPH_HEIGHT);
 
-  for (let i = 0; i < chars.length; i++) {
-    const glyph = getGlyph(chars[i]);
-    if (glyph) {
-      buf.blit(glyph, i * advance, 0);
+  // Resolve all glyphs and calculate total width
+  const glyphs: (ResolvedGlyph | null)[] = chars.map((c) => getGlyph(c));
+  let totalWidth = 0;
+  for (let i = 0; i < glyphs.length; i++) {
+    const g = glyphs[i];
+    totalWidth += g ? g.width : 8; // default to 8px for unknown
+    if (i < glyphs.length - 1) totalWidth += spacing;
+  }
+
+  const buf = new PixelBuffer(totalWidth, GLYPH_HEIGHT);
+  let x = 0;
+  for (let i = 0; i < glyphs.length; i++) {
+    const g = glyphs[i];
+    if (g) {
+      buf.blit(g.grid, x, 0);
+      x += g.width;
+    } else {
+      x += 8;
     }
+    if (i < glyphs.length - 1) x += spacing;
   }
 
   return pixelBufferToOctant(buf);
@@ -185,7 +221,7 @@ export function toBigText(text: string, spacing: number = 0): string[] {
 
 /**
  * Render a single character as big text using octants.
- * Returns 4 strings, each 4 characters long.
+ * Returns 4 strings (4 octant rows for 8×16) or more for wider glyphs.
  */
 export function toBigChar(char: string): string[] {
   return toBigText(char, 0);

@@ -18,8 +18,10 @@
     "access": "public"
   },
   "scripts": {
+    "prebuild": "node scripts/generate-unifont-data.mjs",
     "build": "rm -rf dist && tsc",
     "clean": "rm -rf dist",
+    "pretest": "node scripts/generate-unifont-data.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

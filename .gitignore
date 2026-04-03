@@ -9,6 +9,9 @@ lerna-debug.log*
 
 node_modules
 dist
+
+# Generated Unifont data (regenerated from .hex source by prebuild)
+packages/char-matrix/src/utils/generated/
 dist-ssr
 *.local
 
