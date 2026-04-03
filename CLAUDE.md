@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Developer Workflow
 
-This repo uses [changesets](https://github.com/changesets/changesets) with a 2-PR release process.
+This repo uses [changesets](https://github.com/changesets/changesets) for versioning and publishing.
 
 ### Working on an issue
 
@@ -24,13 +24,7 @@ This repo uses [changesets](https://github.com/changesets/changesets) with a 2-P
 
 ### Releasing
 
-When a code PR merges to `main`, the Release workflow automatically:
-- Runs `changeset version` to bump package versions and generate changelogs
-- Creates/updates a **version PR** (`changeset-release/main` branch) titled "chore: version packages"
-
-Multiple code PRs can merge before releasing — their changesets accumulate into a single version PR.
-
-**To publish:** merge the version PR. The Release workflow runs again, detects no pending changesets, and runs `npm run publish-packages` to publish to npm and create GitHub releases.
+When a PR merges to `main`, the Release workflow automatically versions packages, publishes to npm, and commits the version bumps back to `main`. No separate version PR is needed.
 
 ## Architecture
 
