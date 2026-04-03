@@ -33,18 +33,24 @@ export abstract class Animation {
 
   protected element: Element;
   protected view: RenderTarget;
+  protected use: AnimationUse;
   protected backgroundChar: string = DEFAULT_BACKGROUND_CHAR;
   protected onComplete: () => void = () => {};
 
-  constructor(element: Element, view: RenderTarget, onComplete: () => void) {
+  constructor(element: Element, view: RenderTarget, use: AnimationUse, onComplete: () => void) {
     this.element = element;
     this.view = view;
+    this.use = use;
     this.onComplete = onComplete;
   }
 
   public runStep(o: IntPoint): boolean {
     if (this.isComplete()) {
-      this.clearAnimationLayer(o);
+      if (this.use === "exit") {
+        this.clearAnimationLayer(o);
+      } else {
+        this.syncAnimationLayerToContent(o);
+      }
       this.onComplete();
       return true;
     }
@@ -72,6 +78,13 @@ export abstract class Animation {
   protected clearAnimationLayer(offset: IntPoint) {
     this.element.forEachVisiblePoint((p) => {
       this.view.setAnimationLayerChar(this.backgroundChar, p, offset);
+    });
+  }
+
+  protected syncAnimationLayerToContent(offset: IntPoint) {
+    this.element.forEachVisiblePoint((p) => {
+      const contentChar = this.view.getContentLayerChar(p, offset);
+      this.view.setAnimationLayerChar(contentChar, p, offset);
     });
   }
 }

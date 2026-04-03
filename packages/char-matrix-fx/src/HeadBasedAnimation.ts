@@ -13,7 +13,6 @@ export abstract class HeadBasedAnimation extends Animation {
   protected tailLength: number;
   protected randomizationRange: number;
   protected headSpeed: number;
-  protected use: AnimationUse;
 
   constructor(
     element: Element,
@@ -26,14 +25,13 @@ export abstract class HeadBasedAnimation extends Animation {
     },
     onComplete: () => void = () => {}
   ) {
-    super(element, view, onComplete);
+    super(element, view, config.use, onComplete);
 
     this.headDistance = 0;
 
     this.randomizationRange = config.randomizationRange;
     this.headSpeed = config.headSpeed;
     this.tailLength = config.tailLength;
-    this.use = config.use;
     this.backgroundChar =
       element.getParent()?.getBackgroundChar() || DEFAULT_BACKGROUND_CHAR;
   }
