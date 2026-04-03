@@ -95,8 +95,11 @@ export class TableElement extends Element {
 
   // --- Override child management ---
 
-  // Table manages cell sizes directly; skip generic resize logic.
-  protected override resizeChildren(): void {}
+  // Table manages cell sizes directly; use reprocessContent instead of generic resize logic.
+  protected override resizeChildren(): void {
+    if (this.isProcessing) return;
+    this.reprocessContent();
+  }
 
   public override handleChildResize(): void {
     if (this.isProcessing) return;

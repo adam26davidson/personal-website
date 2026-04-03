@@ -19,7 +19,12 @@ export abstract class ParentElement {
   abstract getContentAreaSize(): IntPoint;
   abstract getStage(): string;
 
+  private isResizingChildren = false;
+
   protected resizeChildren() {
+    if (this.isResizingChildren) return;
+    this.isResizingChildren = true;
+
     const childSizes = this.children.map((c) => c.getSize().copy());
     const totalBoundarySize = this.getTotalBoundarySize();
     for (let i = 0; i < this.children.length; i++) {
@@ -58,5 +63,7 @@ export abstract class ParentElement {
         c.setSize(childSizes[i]);
       });
     }
+
+    this.isResizingChildren = false;
   }
 }

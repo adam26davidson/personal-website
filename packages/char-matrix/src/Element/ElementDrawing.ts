@@ -53,7 +53,7 @@ export abstract class ElementDrawing extends ElementLayout {
 
   protected abstract drawOwnContent(offset: IntPoint): void;
 
-  protected flagForRedraw() {
+  public flagForRedraw() {
     this.mustRedraw = true;
     this.children.forEach((child) => child.flagForRedraw());
   }
