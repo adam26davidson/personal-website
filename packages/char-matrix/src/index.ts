@@ -15,6 +15,9 @@ export type { RenderTarget } from "./interfaces/RenderTarget";
 export type { ElementAnimationHandler } from "./interfaces/ElementAnimationHandler";
 export type { SurfaceTransform } from "./interfaces/SurfaceTransform";
 
+// Render target utilities
+export { RenderTargetBufferManager } from "./RenderTargetBufferManager";
+
 // Types
 export { CharMatrix, FULLWIDTH_CONTINUATION } from "./types/CharMatrix";
 export { IntPoint, ZERO_POINT } from "./types/IntPoint";

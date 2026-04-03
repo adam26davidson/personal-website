@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  CharMatrix,
   IntPoint,
   ZERO_POINT,
   SPACE_CHAR,
@@ -8,45 +7,30 @@ import {
   Element,
   ParentElement,
   ContainerElement,
+  RenderTargetBufferManager,
 } from "../index";
 import type { RenderTarget, CursorType, SizingMethod } from "../index";
 import TextElement from "./TextElement";
 
 /**
  * A headless render target with z-buffer support for testing.
- * Mirrors the merge logic: animation layer wins over content unless SPACE_CHAR,
- * but only if the animation z-index >= the content z-index at that cell.
+ * Delegates all buffer/z-buffer/compositing logic to RenderTargetBufferManager.
  */
 class TestRenderTarget extends ParentElement implements RenderTarget {
-  public contentLayer: CharMatrix;
-  public animationLayer: CharMatrix;
-  public contentZBuffer: number[][];
-  public animationZBuffer: number[][];
+  private buffers: RenderTargetBufferManager;
   private size: IntPoint;
+
+  // Expose layers for tests that access them directly
+  get contentLayer() { return this.buffers.contentLayer; }
+  get animationLayer() { return this.buffers.animationLayer; }
 
   constructor(width: number, height: number) {
     super();
     this.size = new IntPoint(width, height);
-    this.contentLayer = new CharMatrix(this.size);
-    this.animationLayer = new CharMatrix(this.size);
-    this.contentZBuffer = this.makeZBuffer(width, height);
-    this.animationZBuffer = this.makeZBuffer(width, height);
+    this.buffers = new RenderTargetBufferManager(this.size);
   }
 
-  private makeZBuffer(w: number, h: number): number[][] {
-    return Array.from({ length: h }, () => new Array(w).fill(-Infinity));
-  }
-
-  resetZBuffers(): void {
-    const h = this.size.getY();
-    const w = this.size.getX();
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        this.contentZBuffer[y][x] = -Infinity;
-        this.animationZBuffer[y][x] = -Infinity;
-      }
-    }
-  }
+  resetZBuffers(): void { this.buffers.resetZBuffers(); }
 
   getSize(): IntPoint { return this.size; }
   getParent(): ParentElement | null { return null; }
@@ -64,29 +48,15 @@ class TestRenderTarget extends ParentElement implements RenderTarget {
   setCursor(_cursor: CursorType): void {}
 
   setContentLayerChar(char: string, location: IntPoint, offset: IntPoint = ZERO_POINT, zIndex: number = 0): void {
-    const x = location.getX() + offset.getX();
-    const y = location.getY() + offset.getY();
-    if (x >= 0 && x < this.size.getX() && y >= 0 && y < this.size.getY()) {
-      if (zIndex >= this.contentZBuffer[y][x]) {
-        this.contentLayer.setChar(location, char, offset);
-        this.contentZBuffer[y][x] = zIndex;
-      }
-    }
+    this.buffers.setContentLayerChar(char, location, offset, zIndex);
   }
 
   getContentLayerChar(location: IntPoint, offset: IntPoint = ZERO_POINT): string {
-    return this.contentLayer.getChar(location, offset);
+    return this.buffers.getContentLayerChar(location, offset);
   }
 
   setAnimationLayerChar(char: string, location: IntPoint, offset: IntPoint = ZERO_POINT, zIndex: number = 0): void {
-    const x = location.getX() + offset.getX();
-    const y = location.getY() + offset.getY();
-    if (x >= 0 && x < this.size.getX() && y >= 0 && y < this.size.getY()) {
-      if (zIndex >= this.animationZBuffer[y][x]) {
-        this.animationLayer.setChar(location, char, offset);
-        this.animationZBuffer[y][x] = zIndex;
-      }
-    }
+    this.buffers.setAnimationLayerChar(char, location, offset, zIndex);
   }
 
   getPixelOffset(): IntPoint { return ZERO_POINT; }
@@ -94,28 +64,9 @@ class TestRenderTarget extends ParentElement implements RenderTarget {
   registerElement(_element: Element): void {}
   unregisterElement(_element: Element): void {}
 
-  /** Merge content + animation with z-aware compositing. */
   renderToString(): string[] {
-    const rows = this.size.getY();
-    const cols = this.size.getX();
-    const contentRaw = this.contentLayer.getRawMatrix();
-    const animRaw = this.animationLayer.getRawMatrix();
-    const lines: string[] = [];
-    for (let y = 0; y < rows; y++) {
-      let line = "";
-      for (let x = 0; x < cols; x++) {
-        const animChar = animRaw[y][x];
-        const animZ = this.animationZBuffer[y][x];
-        const contentZ = this.contentZBuffer[y][x];
-        if (animChar !== SPACE_CHAR && animZ >= contentZ) {
-          line += animChar;
-        } else {
-          line += contentRaw[y][x];
-        }
-      }
-      lines.push(line);
-    }
-    return lines;
+    const surface = this.buffers.getSurface([]);
+    return surface.map((row) => row.join(""));
   }
 
   setRoot(element: Element): void {
