@@ -74,18 +74,24 @@ describe("toBigText", () => {
     expect(result).toEqual(["", "", "", ""]);
   });
 
-  it("renders bold characters using their ASCII glyph", () => {
+  it("renders bold characters with distinct glyphs from the registry", () => {
     const boldA = String.fromCodePoint(0x1d400); // 𝐀
     const resultBold = toBigText(boldA);
     const resultPlain = toBigText("A");
-    expect(resultBold).toEqual(resultPlain);
+    // Bold glyphs should have visible content
+    const hasContent = resultBold.some(row => [...row].some(ch => ch !== " "));
+    expect(hasContent).toBe(true);
+    // Bold and plain should differ (bold uses its own Unifont glyph)
+    expect(resultBold).not.toEqual(resultPlain);
   });
 
-  it("renders bold lowercase using their ASCII glyph", () => {
-    const boldZ = String.fromCodePoint(0x1d433); // 𝐳
-    const resultBold = toBigText(boldZ);
-    const resultPlain = toBigText("z");
-    expect(resultBold).toEqual(resultPlain);
+  it("renders bold digits with distinct glyphs from the registry", () => {
+    const bold0 = String.fromCodePoint(0x1d7ce); // 𝟎
+    const resultBold = toBigText(bold0);
+    const resultPlain = toBigText("0");
+    const hasContent = resultBold.some(row => [...row].some(ch => ch !== " "));
+    expect(hasContent).toBe(true);
+    expect(resultBold).not.toEqual(resultPlain);
   });
 
   it("renders 'I' with visible pixels", () => {

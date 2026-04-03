@@ -2,9 +2,8 @@ import { PixelBuffer, pixelBufferToOctant } from "./BitmapOctant";
 import { getUnifontGlyph } from "./UnifontRegistry";
 
 /**
- * Map a Unicode codepoint to the ASCII codepoint whose Unifont glyph
- * should be used. Handles Mathematical Bold letters (U+1D400–U+1D433)
- * by mapping them back to their ASCII equivalents.
+ * Map a Mathematical Bold codepoint back to its ASCII equivalent,
+ * used as a last-resort fallback when the full registry is unavailable.
  */
 function toAsciiCodepoint(codepoint: number): number {
   // Mathematical Bold Uppercase: U+1D400–U+1D419 → A-Z
@@ -14,6 +13,10 @@ function toAsciiCodepoint(codepoint: number): number {
   // Mathematical Bold Lowercase: U+1D41A–U+1D433 → a-z
   if (codepoint >= 0x1d41a && codepoint <= 0x1d433) {
     return codepoint - 0x1d41a + 0x61;
+  }
+  // Mathematical Bold Digits: U+1D7CE–U+1D7D7 → 0-9
+  if (codepoint >= 0x1d7ce && codepoint <= 0x1d7d7) {
+    return codepoint - 0x1d7ce + 0x30;
   }
   return codepoint;
 }
@@ -155,22 +158,31 @@ interface ResolvedGlyph {
 
 /**
  * Get the pixel grid for a character.
- * Checks inline ASCII table first, then falls back to the full Unifont registry.
+ * Tries the full Unifont registry first (preserving bold/variant glyphs),
+ * then falls back to inline ASCII table with codepoint normalization.
  */
 function getGlyph(char: string): ResolvedGlyph | null {
   const rawCodepoint = char.codePointAt(0) ?? 0;
-  const codepoint = toAsciiCodepoint(rawCodepoint);
 
   // Fast path: inline ASCII glyphs (always 8px wide)
-  const asciiHex = ASCII_HEX[codepoint];
+  const asciiHex = ASCII_HEX[rawCodepoint];
   if (asciiHex) {
     return { grid: parseHexGlyph(asciiHex), width: 8 };
   }
 
-  // Full Unifont registry lookup
-  const unifontGlyph = getUnifontGlyph(codepoint);
+  // Full Unifont registry lookup with original codepoint (preserves bold etc.)
+  const unifontGlyph = getUnifontGlyph(rawCodepoint);
   if (unifontGlyph) {
     return { grid: parseHexGlyph(unifontGlyph.hex), width: unifontGlyph.width };
+  }
+
+  // Fallback: normalize bold/variant codepoints to ASCII equivalents
+  const fallbackCodepoint = toAsciiCodepoint(rawCodepoint);
+  if (fallbackCodepoint !== rawCodepoint) {
+    const fallbackHex = ASCII_HEX[fallbackCodepoint];
+    if (fallbackHex) {
+      return { grid: parseHexGlyph(fallbackHex), width: 8 };
+    }
   }
 
   return null;

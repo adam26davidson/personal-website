@@ -18,15 +18,14 @@ export function toBold(text: string): string {
 }
 
 export function toBoldChar(char: string): string {
-  // Check if the character is a letter
   if (char.match(/[A-Z]/)) {
-    const boldCharValue = char.charCodeAt(0) + 0x1d400 - 0x41;
-    return String.fromCodePoint(boldCharValue);
+    return String.fromCodePoint(char.charCodeAt(0) + 0x1d400 - 0x41);
   } else if (char.match(/[a-z]/)) {
-    const boldCharValue = char.charCodeAt(0) + 0x1d41a - 0x61;
-    return String.fromCodePoint(boldCharValue);
+    return String.fromCodePoint(char.charCodeAt(0) + 0x1d41a - 0x61);
+  } else if (char.match(/[0-9]/)) {
+    // Mathematical Bold Digits: U+1D7CE–U+1D7D7
+    return String.fromCodePoint(char.charCodeAt(0) + 0x1d7ce - 0x30);
   }
-  // If it's not a letter, return the original character
   return char;
 }
 
