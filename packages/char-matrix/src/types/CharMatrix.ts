@@ -1,7 +1,11 @@
 import { SPACE_CHAR } from "../constants";
 import { throttledWarn } from "../utils/Logging";
+import { isFullwidth } from "../utils/fullwidthRanges";
 import { IntPoint, ZERO_POINT } from "./IntPoint";
 import { X, Y } from "./Axes";
+
+// Continuation marker for the second cell of a fullwidth character.
+export const FULLWIDTH_CONTINUATION = "";
 
 export class CharMatrix {
   private matrix: string[][];
@@ -47,6 +51,9 @@ export class CharMatrix {
       y < this.matrix.length
     ) {
       this.matrix[y][x] = char;
+      if (isFullwidth(char) && x + 1 < this.matrix[0].length) {
+        this.matrix[y][x + 1] = FULLWIDTH_CONTINUATION;
+      }
     } else {
       throttledWarn(`attempting to set a character outside of matrix bounds`);
     }
@@ -88,8 +95,16 @@ export class CharMatrix {
       const dstRow = otherRaw[y];
       loc.set(Y, y);
       for (let x = 0; x < cols; x++) {
+        if (srcRow[x] === FULLWIDTH_CONTINUATION) {
+          dstRow[x] = FULLWIDTH_CONTINUATION;
+          continue;
+        }
         loc.set(X, x);
-        dstRow[x] = fn(srcRow[x], loc);
+        const result = fn(srcRow[x], loc);
+        dstRow[x] = result;
+        if (isFullwidth(result) && x + 1 < cols) {
+          dstRow[x + 1] = FULLWIDTH_CONTINUATION;
+        }
       }
     }
   }

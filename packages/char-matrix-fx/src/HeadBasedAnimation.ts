@@ -1,4 +1,4 @@
-import { Element, IntPoint, DEFAULT_BACKGROUND_CHAR } from "@adam26davidson/char-matrix";
+import { Element, IntPoint, DEFAULT_BACKGROUND_CHAR, FULLWIDTH_CONTINUATION } from "@adam26davidson/char-matrix";
 import type { RenderTarget } from "@adam26davidson/char-matrix";
 import { Animation, AnimationUse } from "./Animation";
 import TOP_SIMILAR from "./topSimilar";
@@ -79,6 +79,7 @@ export abstract class HeadBasedAnimation extends Animation {
     o: IntPoint
   ): string {
     const baseChar = this.view.getContentLayerChar(p, o);
+    if (baseChar === FULLWIDTH_CONTINUATION) return baseChar;
     if (!(baseChar in TOP_SIMILAR) || baseChar === "\u00a0") return baseChar;
 
     let index = 0;

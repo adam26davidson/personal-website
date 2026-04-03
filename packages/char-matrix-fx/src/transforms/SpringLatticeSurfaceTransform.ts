@@ -1,4 +1,4 @@
-import { CharMatrix, IntPoint } from "@adam26davidson/char-matrix";
+import { CharMatrix, IntPoint, FULLWIDTH_CONTINUATION } from "@adam26davidson/char-matrix";
 import type { SurfaceTransform } from "@adam26davidson/char-matrix";
 import { SpringLattice } from "../SpringLattice";
 import TOP_SIMILAR from "../topSimilar";
@@ -16,6 +16,7 @@ export class SpringLatticeSurfaceTransform implements SurfaceTransform {
 
   transform(source: CharMatrix, output: CharMatrix, viewSize: IntPoint): void {
     source.map((c: string, p: IntPoint) => {
+      if (c === FULLWIDTH_CONTINUATION) return c;
       const x = p.getX() / viewSize.getX();
       const y = p.getY() / viewSize.getY();
       const position = this.springLattice.sample(x, y);

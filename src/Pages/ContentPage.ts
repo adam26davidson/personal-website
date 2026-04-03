@@ -53,7 +53,7 @@ export abstract class ContentPage extends Page {
       this.setPage("title");
     });
 
-    const navButton = new LinkElement("navButton", "☰\u200B", this.view);
+    const navButton = new LinkElement("navButton", "☰", this.view);
 
     navButton.setOnClick(() => {
       this.setPage("mobileNav");
