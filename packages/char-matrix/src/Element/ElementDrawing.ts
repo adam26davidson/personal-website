@@ -36,6 +36,10 @@ export abstract class ElementDrawing extends ElementLayout {
   }
 
   public draw(offset: IntPoint, inheritedZIndex: number = 0): void {
+    // Don't draw queued elements — they haven't started their entrance yet.
+    // Content will be drawn on the first frame after transitioning to "entering".
+    if (this.stage === "queued") return;
+
     this.effectiveZIndex = Math.max(this.zIndex, inheritedZIndex);
 
     const fullOffset = offset.add(this.scrollOffset);

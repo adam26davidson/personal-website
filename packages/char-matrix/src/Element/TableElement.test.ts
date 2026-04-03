@@ -66,6 +66,7 @@ function renderTable(
   }
 
   parent.setChildren([table]);
+  parent.startTransition("enter");
   parent.draw(ZERO_POINT);
 
   // Extract rendered lines from matrix
@@ -420,6 +421,7 @@ describe("TableElement", () => {
 
       table.setRows([{ cells: [{ text: "A" }] }]);
       parent.setChildren([table]);
+      parent.startTransition("enter");
       parent.draw(ZERO_POINT);
 
       let rawMatrix = view.getMatrix().getRawMatrix();
@@ -525,6 +527,7 @@ describe("TableElement", () => {
         height: 30, heightType: "absolute",
       });
       viewParent.setChildren([root]);
+      viewParent.startTransition("enter");
       viewParent.draw(ZERO_POINT);
 
       expect(table.getSize().getY()).toBeGreaterThan(0);
@@ -565,6 +568,7 @@ describe("TableElement", () => {
 
       table.setRows([{ cells: [{ text: "data" }] }]);
       root.setChildren([table]);
+      root.startTransition("enter");
       root.draw(ZERO_POINT);
 
       expect(table.getSize().getX()).toBe(20);
@@ -673,6 +677,7 @@ describe("TableElement", () => {
         height: VIEW_H, heightType: "absolute",
       });
       viewParent.setChildren([root]);
+      viewParent.startTransition("enter");
       viewParent.draw(ZERO_POINT);
 
       expect(calendar.getSize().getX()).toBeGreaterThan(0);
