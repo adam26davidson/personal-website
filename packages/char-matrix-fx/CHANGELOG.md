@@ -1,5 +1,15 @@
 # @adam26davidson/char-matrix-fx
 
+## 0.0.5
+
+### Patch Changes
+
+- 123804e: Add per-cell z-index support for element draw priority. Elements with higher `zIndex` render on top of elements with lower values, regardless of draw order. The z-buffer prevents lower-z animations from bleeding through higher-z content during the compositing step.
+- Updated dependencies [8931350]
+- Updated dependencies [183605f]
+- Updated dependencies [123804e]
+  - @adam26davidson/char-matrix@0.0.7
+
 ## 0.0.4
 
 ### Patch Changes
