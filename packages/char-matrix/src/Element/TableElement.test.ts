@@ -8,7 +8,7 @@ import type { RenderTarget } from "../interfaces/RenderTarget";
 import type { CursorType } from "./ElementBase";
 import type { Element } from "./Element";
 import { ContainerElement } from "./ContainerElement";
-import { Y } from "../types/Axes";
+import { X, Y } from "../types/Axes";
 
 /**
  * A minimal RenderTarget implementation for testing.
@@ -480,6 +480,219 @@ describe("TableElement", () => {
       // 1 bottom border
       // = 9
       expect(table.getSize().getY()).toBe(9);
+    });
+  });
+
+  describe("resize with expand height", () => {
+    it("table with expand height renders after parent resize", () => {
+      const view = createMockView(40, 30);
+
+      const root = new ContainerElement({
+        key: "root", view, mainAxis: Y,
+        width: 40, widthType: "absolute",
+        height: 30, heightType: "absolute",
+        spacing: 1,
+      });
+
+      const topRow = new TextElement({
+        key: "top-row", view,
+        text: "Header",
+        widthType: "expand", heightType: "content",
+      });
+
+      const table = new TableElement({
+        key: "calendar", view,
+        columns: [
+          { header: "A", widthType: "expand" },
+          { header: "B", widthType: "expand" },
+        ],
+        title: "Calendar",
+        width: 1, widthType: "relative",
+        heightType: "expand",
+        backgroundChar: SPACE_CHAR,
+      });
+
+      table.setRows([
+        { cells: [{ text: "1" }, { text: "2" }] },
+        { cells: [{ text: "3" }, { text: "4" }] },
+      ]);
+
+      root.setChildren([topRow, table]);
+
+      const viewParent = new ContainerElement({
+        key: "view", view, mainAxis: Y,
+        width: 40, widthType: "absolute",
+        height: 30, heightType: "absolute",
+      });
+      viewParent.setChildren([root]);
+      viewParent.draw(ZERO_POINT);
+
+      expect(table.getSize().getY()).toBeGreaterThan(0);
+      expect(table.getSize().getX()).toBeGreaterThan(0);
+
+      let raw = view.getMatrix().getRawMatrix().map(r => r.join(""));
+      expect(raw.some(l => l.includes("Calendar"))).toBe(true);
+
+      // Resize
+      view.getMatrix().resize(new IntPoint(40, 30));
+      root.setSize(new IntPoint(35, 25));
+      root.flagForRedraw();
+      root.draw(ZERO_POINT);
+
+      expect(table.getSize().getY()).toBeGreaterThan(0);
+      expect(table.getSize().getX()).toBeGreaterThan(0);
+
+      raw = view.getMatrix().getRawMatrix().map(r => r.join(""));
+      expect(raw.some(l => l.includes("Calendar"))).toBe(true);
+    });
+
+    it("table column widths update after parent width change", () => {
+      const view = createMockView(40, 20);
+
+      const root = new ContainerElement({
+        key: "root", view, mainAxis: Y,
+        width: 20, widthType: "absolute",
+        height: 20, heightType: "absolute",
+      });
+
+      const table = new TableElement({
+        key: "t", view,
+        columns: [{ header: "Col", widthType: "expand" }],
+        width: 1, widthType: "relative",
+        heightType: "expand",
+        backgroundChar: SPACE_CHAR,
+      });
+
+      table.setRows([{ cells: [{ text: "data" }] }]);
+      root.setChildren([table]);
+      root.draw(ZERO_POINT);
+
+      expect(table.getSize().getX()).toBe(20);
+
+      root.setSize(new IntPoint(30, 20));
+      root.flagForRedraw();
+
+      expect(table.getSize().getX()).toBe(30);
+      expect(table.getSize().getY()).toBeGreaterThan(0);
+    });
+
+    it("expand table height adjusts when parent height changes", () => {
+      const view = createMockView(40, 30);
+
+      const root = new ContainerElement({
+        key: "root", view, mainAxis: Y,
+        width: 40, widthType: "absolute",
+        height: 20, heightType: "absolute",
+        spacing: 0,
+      });
+
+      const topRow = new ContainerElement({
+        key: "top-row", view, mainAxis: X,
+        width: 1, widthType: "relative",
+        heightType: "content",
+      });
+      topRow.setChildren([new TextElement({
+        key: "header-text", view,
+        text: "Header",
+        widthType: "content", heightType: "content",
+      })]);
+
+      const table = new TableElement({
+        key: "t", view,
+        columns: [{ widthType: "expand" }],
+        width: 1, widthType: "relative",
+        heightType: "expand",
+        backgroundChar: SPACE_CHAR,
+      });
+      table.setRows([{ cells: [{ text: "X" }] }]);
+
+      root.setChildren([topRow, table]);
+
+      expect(topRow.getSize().getY()).toBe(1);
+      expect(table.getSize().getY()).toBe(19);
+
+      root.setSize(new IntPoint(40, 30));
+      root.flagForRedraw();
+
+      expect(topRow.getSize().getY()).toBe(1);
+      expect(table.getSize().getY()).toBe(29);
+    });
+
+    it("dashboard-like layout: expand table survives resize", () => {
+      const VIEW_W = 80;
+      const VIEW_H = 40;
+      const view = createMockView(VIEW_W, VIEW_H);
+
+      const root = new ContainerElement({
+        key: "dashboard-root", view, mainAxis: Y,
+        width: 1, widthType: "relative",
+        height: 1, heightType: "relative",
+        spacing: 1, paddingX: 2, paddingY: 1,
+      });
+
+      const dateText = new TextElement({ key: "date", view, text: "Friday", widthType: "content", heightType: "content" });
+      const clockText = new TextElement({ key: "clock", view, text: "12:00", widthType: "content", heightType: "content" });
+      const dateTimeCol = new ContainerElement({ key: "date-time-col", view, mainAxis: Y, widthType: "expand", heightType: "content", spacing: 1 });
+      dateTimeCol.setChildren([dateText, clockText]);
+
+      const transitTable = new TableElement({
+        key: "transit", view,
+        columns: [{ header: "City", widthType: "expand" }, { header: "South", widthType: "expand" }],
+        title: "U6", showRowSeparators: false,
+        width: 32, widthType: "absolute", heightType: "content",
+        backgroundChar: SPACE_CHAR,
+      });
+      transitTable.setRows([{ cells: [{ text: "3 min" }, { text: "5 min" }] }]);
+
+      const topRow = new ContainerElement({
+        key: "top-row", view, mainAxis: X,
+        width: 1, widthType: "relative", heightType: "content",
+        alignItems: "start", spacing: 2,
+      });
+      topRow.setChildren([dateTimeCol, transitTable]);
+
+      const calendar = new TableElement({
+        key: "calendar", view,
+        columns: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(h => ({
+          header: h, widthType: "expand" as const, align: "start" as const,
+        })),
+        title: "April 2026", titleAlign: "center",
+        showRowSeparators: true,
+        width: 1, widthType: "relative", heightType: "expand",
+        backgroundChar: SPACE_CHAR,
+      });
+      calendar.setRows([
+        { cells: [{ text: "" }, { text: "" }, { text: "" }, { text: "1" }, { text: "2" }, { text: "3" }, { text: "4" }] },
+      ]);
+
+      root.setChildren([topRow, calendar]);
+
+      const viewParent = new ContainerElement({
+        key: "view", view, mainAxis: Y,
+        width: VIEW_W, widthType: "absolute",
+        height: VIEW_H, heightType: "absolute",
+      });
+      viewParent.setChildren([root]);
+      viewParent.draw(ZERO_POINT);
+
+      expect(calendar.getSize().getX()).toBeGreaterThan(0);
+      expect(calendar.getSize().getY()).toBeGreaterThan(5);
+
+      let raw = view.getMatrix().getRawMatrix().map(r => r.join(""));
+      expect(raw.some(l => l.includes("April 2026"))).toBe(true);
+
+      // Resize
+      view.getMatrix().resize(new IntPoint(VIEW_W, VIEW_H));
+      viewParent.setSize(new IntPoint(60, 30));
+      viewParent.flagForRedraw();
+      viewParent.draw(ZERO_POINT);
+
+      expect(calendar.getSize().getX()).toBeGreaterThan(0);
+      expect(calendar.getSize().getY()).toBeGreaterThan(5);
+
+      raw = view.getMatrix().getRawMatrix().map(r => r.join(""));
+      expect(raw.some(l => l.includes("April 2026"))).toBe(true);
+      expect(raw.some(l => l.includes("Sun"))).toBe(true);
     });
   });
 
