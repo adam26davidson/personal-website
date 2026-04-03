@@ -1,5 +1,15 @@
 # @adam26davidson/char-matrix
 
+## 0.0.5
+
+### Patch Changes
+
+- af4eff5: Fix element resize propagation
+
+  - Make `flagForRedraw` public so render targets can flag elements for redraw after resize
+  - Add re-entrancy guard to `ParentElement.resizeChildren` to prevent infinite recursive cascades during resize
+  - Make `TableElement.resizeChildren` propagate resize to cell elements via `reprocessContent` instead of being a no-op
+
 ## 0.0.4
 
 ### Patch Changes
