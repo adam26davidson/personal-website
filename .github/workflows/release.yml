@@ -9,7 +9,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: github.event.head_commit.message != 'chore: version packages'
+    if: ${{ github.event.head_commit.message != 'chore: version packages' }}
     steps:
       - name: Generate app token
         id: app-token
