@@ -1,0 +1,38 @@
+{
+  "name": "@adam26davidson/char-matrix-react-renderer",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "react-reconciler": "^0.29.0"
+  },
+  "peerDependencies": {
+    "@adam26davidson/char-matrix": "*",
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-reconciler": "^0.33.0",
+    "typescript": "^5.2.2",
+    "vitest": "^3.0.2"
+  }
+}

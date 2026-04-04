@@ -60,4 +60,5 @@ const title = new TextElement({
 ## Related packages
 
 - [`@adam26davidson/char-matrix-fx`](https://www.npmjs.com/package/@adam26davidson/char-matrix-fx) — Animations, physics, and surface transforms
-- [`@adam26davidson/char-matrix-react`](https://www.npmjs.com/package/@adam26davidson/char-matrix-react) — React integration layer
+- [`@adam26davidson/char-matrix-react`](https://www.npmjs.com/package/@adam26davidson/char-matrix-react) — Embed React components inside a character matrix layout
+- [`@adam26davidson/char-matrix-react-renderer`](https://www.npmjs.com/package/@adam26davidson/char-matrix-react-renderer) — Declarative React JSX renderer for char-matrix element trees

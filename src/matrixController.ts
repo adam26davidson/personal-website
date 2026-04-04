@@ -1,15 +1,18 @@
 import MatrixView from "./matrixView";
 import { Page } from "./Pages/Page";
-import { AboutPage } from "./Pages/AboutPage";
-import { TitlePage } from "./Pages/TitlePage";
 import { NavigateFunction } from "react-router";
-import { ProjectsPage } from "./Pages/ProjectsPage";
-import { ProfessionalExperiencePage } from "./Pages/ProfessionalExperiencePage";
-import { AboutThisSitePage } from "./Pages/AboutThisSitePage";
-import { ContactPage } from "./Pages/ContactPage";
-import { MobileNavPage } from "./Pages/MobileNavPage";
-import { BlogPage } from "./Pages/BlogPage";
 import { BlogPostPage } from "./Pages/BlogPostPage";
+import { ReactPage } from "./Pages/ReactPage";
+
+// Declarative page components
+import { TitleContent } from "./Pages/declarative/TitlePage";
+import { AboutContent } from "./Pages/declarative/AboutPage";
+import { ProjectsContent } from "./Pages/declarative/ProjectsPage";
+import { ProfessionalExperienceContent } from "./Pages/declarative/ProfessionalExperiencePage";
+import { AboutThisSiteContent } from "./Pages/declarative/AboutThisSitePage";
+import { ContactContent } from "./Pages/declarative/ContactPage";
+import { MobileNavContent } from "./Pages/declarative/MobileNavPage";
+import { BlogContent } from "./Pages/declarative/BlogPage";
 
 export type PageKey =
   | "about"
@@ -52,19 +55,20 @@ class MatrixController {
   private navigate: NavigateFunction = () => {};
 
   constructor(view: MatrixView) {
+    const setPage = this.setPage.bind(this);
+
     this.pages = {
-      title: new TitlePage(view, this.setPage.bind(this)),
-      about: new AboutPage(view, this.setPage.bind(this)),
-      projects: new ProjectsPage(view, this.setPage.bind(this)),
-      professionalExperience: new ProfessionalExperiencePage(
-        view,
-        this.setPage.bind(this)
-      ),
-      aboutThisSite: new AboutThisSitePage(view, this.setPage.bind(this)),
-      contact: new ContactPage(view, this.setPage.bind(this)),
-      mobileNav: new MobileNavPage(view, this.setPage.bind(this)),
-      blog: new BlogPage(view, this.setPage.bind(this)),
-      blogPost: new BlogPostPage(view, this.setPage.bind(this)),
+      // Declarative pages (React components via reconciler)
+      title: new ReactPage(view, setPage, TitleContent),
+      about: new ReactPage(view, setPage, AboutContent),
+      projects: new ReactPage(view, setPage, ProjectsContent),
+      professionalExperience: new ReactPage(view, setPage, ProfessionalExperienceContent),
+      aboutThisSite: new ReactPage(view, setPage, AboutThisSiteContent),
+      contact: new ReactPage(view, setPage, ContactContent),
+      mobileNav: new ReactPage(view, setPage, MobileNavContent),
+      blog: new ReactPage(view, setPage, BlogContent),
+      // Imperative page (uses ReactComponentElement for MDX overlay)
+      blogPost: new BlogPostPage(view, setPage),
     };
   }
 

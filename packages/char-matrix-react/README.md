@@ -34,3 +34,9 @@ The element reports its position and size to the render target, which renders th
 - `@adam26davidson/char-matrix`
 - `react` ^18.0.0
 - `react-dom` ^18.0.0
+
+## Related packages
+
+- [`@adam26davidson/char-matrix`](https://www.npmjs.com/package/@adam26davidson/char-matrix) — Core layout and rendering engine
+- [`@adam26davidson/char-matrix-fx`](https://www.npmjs.com/package/@adam26davidson/char-matrix-fx) — Animations, physics, and surface transforms
+- [`@adam26davidson/char-matrix-react-renderer`](https://www.npmjs.com/package/@adam26davidson/char-matrix-react-renderer) — Declarative React JSX renderer for char-matrix element trees
