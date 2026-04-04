@@ -1,5 +1,13 @@
 # @adam26davidson/char-matrix-fx
 
+## 0.0.6
+
+### Patch Changes
+
+- 56f1267: Add README documentation for npm package pages.
+- Updated dependencies [56f1267]
+  - @adam26davidson/char-matrix@0.0.8
+
 ## 0.0.5
 
 ### Patch Changes

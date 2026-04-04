@@ -1,5 +1,11 @@
 # @adam26davidson/char-matrix
 
+## 0.0.8
+
+### Patch Changes
+
+- 56f1267: Add README documentation for npm package pages.
+
 ## 0.0.7
 
 ### Patch Changes
