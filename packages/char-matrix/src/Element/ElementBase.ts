@@ -102,7 +102,7 @@ export abstract class ElementBase extends ParentElement {
       return;
     }
     const oldSize = this.size.copy();
-    this.size = size;
+    this.size = size.copy();
 
     let axis: import("../types/Axes").Axis | null = null;
     if (
