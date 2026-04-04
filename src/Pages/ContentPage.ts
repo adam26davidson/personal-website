@@ -14,7 +14,11 @@ export abstract class ContentPage extends Page {
   protected pageKey: PageKey = "about";
 
   public enterPage(fromTitle: boolean): void {
-    if (fromTitle) {
+    // Recreate sidebar layout if needed (e.g. previous page was declarative
+    // and unmounted the entire tree on exit).
+    const needsLayout = fromTitle || !this.view.getElement("contentContainer");
+
+    if (needsLayout) {
       if (this.view.getIsMobile()) {
         console.log("creating title mobile");
         this.createTitleMobile();
@@ -29,7 +33,7 @@ export abstract class ContentPage extends Page {
     }
     contentContainer?.setChildren([this.contentElement]);
 
-    if (fromTitle) {
+    if (needsLayout) {
       this.mainContainer?.startTransition("enter");
     } else {
       this.contentElement.startTransition("enter");

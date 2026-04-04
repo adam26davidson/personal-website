@@ -34,4 +34,8 @@ export interface RenderTarget {
   // --- Element registry ---
   registerElement(element: Element): void;
   unregisterElement(element: Element): void;
+
+  // --- Root element management ---
+  setRoot(element: Element): void;
+  getRoot(): Element;
 }
