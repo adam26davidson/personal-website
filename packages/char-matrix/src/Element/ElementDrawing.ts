@@ -23,6 +23,20 @@ export abstract class ElementDrawing extends ElementLayout {
 
   public getScrollOffset = () => this.scrollOffset;
 
+  /**
+   * Update drawing config fields. Does NOT call reprocessContent().
+   */
+  public updateDrawingConfig(partial: Partial<ElementConfig>): void {
+    if (partial.animationHandler !== undefined) {
+      this.animationHandler = partial.animationHandler || null;
+      // Wire animation handler to element via duck-type check
+      const handler = this.animationHandler as any;
+      if (handler?.setElement) {
+        handler.setElement(this);
+      }
+    }
+  }
+
   /** The effective z-index for this element, accounting for parent inheritance. */
   protected effectiveZIndex: number = 0;
   public getEffectiveZIndex = () => this.effectiveZIndex;

@@ -22,6 +22,15 @@ export abstract class ElementInteraction extends ElementDrawing {
     this.onclick = onClick;
   }
 
+  /**
+   * Update interaction config fields. Does NOT call reprocessContent().
+   */
+  public updateInteractionConfig(partial: Partial<ElementConfig>): void {
+    if (partial.cursor !== undefined) {
+      this.cursor = partial.cursor;
+    }
+  }
+
   public getAnimationHandler(): ElementAnimationHandler | null {
     return this.animationHandler;
   }

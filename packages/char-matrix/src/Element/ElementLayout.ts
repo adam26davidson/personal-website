@@ -134,6 +134,43 @@ export abstract class ElementLayout extends ElementBase {
     }
   }
 
+  /**
+   * Update layout config fields. Does NOT call reprocessContent().
+   */
+  public updateLayoutConfig(partial: Partial<ElementConfig>): void {
+    if (partial.bordered !== undefined) {
+      this.bordered = partial.bordered;
+    }
+    if (partial.backgroundChar !== undefined) {
+      this.backgroundChar = partial.backgroundChar;
+    }
+    if (partial.scrollable !== undefined) {
+      this.scrollable = partial.scrollable;
+    }
+
+    // Recalculate padding if any padding prop changed
+    if (
+      partial.padding !== undefined ||
+      partial.paddingX !== undefined ||
+      partial.paddingY !== undefined ||
+      partial.paddingTop !== undefined ||
+      partial.paddingBottom !== undefined ||
+      partial.paddingLeft !== undefined ||
+      partial.paddingRight !== undefined
+    ) {
+      this.padding = {
+        start: new IntPoint(
+          partial.paddingLeft ?? partial.paddingX ?? partial.padding ?? this.padding.start.getX(),
+          partial.paddingTop ?? partial.paddingY ?? partial.padding ?? this.padding.start.getY()
+        ),
+        end: new IntPoint(
+          partial.paddingRight ?? partial.paddingX ?? partial.padding ?? this.padding.end.getX(),
+          partial.paddingBottom ?? partial.paddingY ?? partial.padding ?? this.padding.end.getY()
+        ),
+      };
+    }
+  }
+
   public forEachVisibleAlongAxis(a: Axis, fn: (i: number) => void) {
     if (!this.parent) return;
     const p0 = this.offset

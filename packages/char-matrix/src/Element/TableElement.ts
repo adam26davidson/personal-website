@@ -87,6 +87,36 @@ export class TableElement extends Element {
     this.flagForRedraw();
   }
 
+  /**
+   * Batch-update all table config fields, then reprocess once.
+   */
+  public updateTableConfig(partial: Partial<TableElementConfig>): void {
+    // Delegate to hierarchy layers (no reprocess yet)
+    this.updateBaseConfig(partial);
+    this.updateLayoutConfig(partial);
+    this.updateDrawingConfig(partial);
+    this.updateInteractionConfig(partial);
+    this.updateElementConfig(partial);
+
+    // Table-specific fields
+    if (partial.columns !== undefined) {
+      this.columns = partial.columns;
+    }
+    if (partial.title !== undefined) {
+      this.title = partial.title;
+    }
+    if (partial.titleAlign !== undefined) {
+      this.titleAlign = partial.titleAlign;
+    }
+    if (partial.showRowSeparators !== undefined) {
+      this.showRowSeparators = partial.showRowSeparators;
+    }
+
+    // Single reprocess + redraw
+    this.reprocessContent();
+    this.flagForRedraw();
+  }
+
   public setTitle(title: string): void {
     this.title = title;
     this.reprocessContent();

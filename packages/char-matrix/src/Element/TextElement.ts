@@ -48,6 +48,31 @@ export default class TextElement extends Element {
     this.hoverTextTransform = config.hoverTransform || "none";
   }
 
+  /**
+   * Batch-update all text config fields, then reprocess once.
+   */
+  public updateTextConfig(partial: Partial<TextElementConfig>): void {
+    // Delegate to hierarchy layers (no reprocess yet)
+    this.updateBaseConfig(partial);
+    this.updateLayoutConfig(partial);
+    this.updateDrawingConfig(partial);
+    this.updateInteractionConfig(partial);
+    this.updateElementConfig(partial);
+
+    // Text-specific fields
+    if (partial.hoverTransform !== undefined) {
+      this.hoverTextTransform = partial.hoverTransform;
+    }
+
+    if (partial.text !== undefined) {
+      // setBaseText calls reprocessContent internally
+      this.setBaseText(partial.text);
+    } else {
+      this.reprocessContent();
+    }
+    this.flagForRedraw();
+  }
+
   protected setBaseText(text: string) {
     this.templateText = this.replaceSpaceWithBreakingSpace(text);
     this.untransformedTemplateText = this.templateText;

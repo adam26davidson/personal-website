@@ -28,9 +28,46 @@ export class ContainerElement extends Element {
     this.spacing = config.spacing || 0;
   }
 
+  /**
+   * Batch-update all container config fields, then reprocess once.
+   */
+  public updateContainerConfig(partial: Partial<ContainerElementConfig>): void {
+    // Delegate to hierarchy layers (no reprocess yet)
+    this.updateBaseConfig(partial);
+    this.updateLayoutConfig(partial);
+    this.updateDrawingConfig(partial);
+    this.updateInteractionConfig(partial);
+    this.updateElementConfig(partial);
+
+    // Container-specific fields
+    if (partial.mainAxis !== undefined) {
+      this.mainAxis = partial.mainAxis;
+      this.secondaryAxis = this.mainAxis === X ? Y : X;
+    }
+    if (partial.justifyContent !== undefined) {
+      this.justifyContent = partial.justifyContent;
+    }
+    if (partial.alignItems !== undefined) {
+      this.alignItems = partial.alignItems;
+    }
+    if (partial.spacing !== undefined) {
+      this.spacing = partial.spacing;
+    }
+
+    // Single reprocess + redraw
+    this.reprocessContent();
+    this.flagForRedraw();
+  }
+
   protected reprocessContent() {
     const ma = this.mainAxis; // main axis
     const sa = this.secondaryAxis; // secondary axis
+
+    // Separate flow children from absolutely positioned ones
+    const flowChildren = this.children.filter(
+      (c) => c.getPositionMode() === "flow"
+    );
+
     const size = this.calculateSize();
 
     const totalBoundary = this.getTotalBoundarySize();
@@ -50,7 +87,8 @@ export class ContainerElement extends Element {
       }
     }
 
-    this.children.forEach((e) => {
+    // Only layout flow children
+    flowChildren.forEach((e) => {
       let offsetS = globalOffsetS;
 
       const eSizeM = e.getSize().get(ma);
@@ -73,6 +111,8 @@ export class ContainerElement extends Element {
 
       offsetM += eSizeM + this.spacing;
     });
+
+    // Absolute children keep their offset as-is (set via xOffset/yOffset)
 
     this.flagForRedraw();
     this.setSize(size);
@@ -113,23 +153,28 @@ export class ContainerElement extends Element {
     return size;
   }
 
+  private getFlowChildren() {
+    return this.children.filter((c) => c.getPositionMode() === "flow");
+  }
+
   private calculateMinContentSizeS() {
     let minSize = 0;
-    this.children.forEach((e) => {
+    for (const e of this.getFlowChildren()) {
       const eSize = e.getSize().get(this.secondaryAxis);
       if (eSize > minSize) {
         minSize = eSize;
       }
-    });
+    }
     return minSize;
   }
 
   private calculateMinContentSizeM() {
+    const flow = this.getFlowChildren();
     let minSize = 0;
-    this.children.forEach((e) => {
+    for (const e of flow) {
       minSize += e.getSize().get(this.mainAxis);
-    });
-    minSize += (this.children.length - 1) * this.spacing;
+    }
+    minSize += Math.max(0, flow.length - 1) * this.spacing;
     return minSize;
   }
 }

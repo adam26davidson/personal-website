@@ -1,6 +1,6 @@
 // Element system
 export { Element } from "./Element/Element";
-export type { ElementConfig, SizingMethod, CursorType, ElementStage } from "./Element/ElementBase";
+export type { ElementConfig, SizingMethod, CursorType, ElementStage, PositionMode } from "./Element/ElementBase";
 export { ParentElement } from "./Element/ParentElement";
 export { ContainerElement } from "./Element/ContainerElement";
 export type { ContainerElementConfig, Alignment } from "./Element/ContainerElement";
@@ -17,6 +17,7 @@ export type { SurfaceTransform } from "./interfaces/SurfaceTransform";
 
 // Render target utilities
 export { RenderTargetBufferManager } from "./RenderTargetBufferManager";
+export { RenderLoopController } from "./RenderLoopController";
 
 // Types
 export { CharMatrix, FULLWIDTH_CONTINUATION } from "./types/CharMatrix";

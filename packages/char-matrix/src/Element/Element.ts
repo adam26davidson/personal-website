@@ -58,6 +58,19 @@ export abstract class Element extends ElementInteraction {
 
   public getIsOnView = () => this.isOnView;
 
+  /**
+   * Update element-level config fields (transition timing).
+   * Does NOT call reprocessContent().
+   */
+  public updateElementConfig(partial: Partial<ElementConfig>): void {
+    if (partial.entranceTiming !== undefined) {
+      this.entranceSequenceTiming = partial.entranceTiming;
+    }
+    if (partial.exitTiming !== undefined) {
+      this.exitSequenceTiming = partial.exitTiming;
+    }
+  }
+
   // --- child management ---
 
   public setChildren(children: Element[]) {

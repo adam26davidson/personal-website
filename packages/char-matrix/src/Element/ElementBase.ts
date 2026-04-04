@@ -13,6 +13,8 @@ export type ElementStage =
   | "exiting"
   | "exited";
 
+export type PositionMode = "flow" | "absolute";
+
 export interface ElementConfig {
   key: string;
   view: RenderTarget;
@@ -38,6 +40,8 @@ export interface ElementConfig {
   exitTiming?: "parallel" | "series";
   /** Draw priority. Higher values render on top of lower values. Default: 0 */
   zIndex?: number;
+  /** Positioning mode. "flow" (default) participates in parent layout; "absolute" is positioned freely via xOffset/yOffset. */
+  position?: PositionMode;
 }
 
 export abstract class ElementBase extends ParentElement {
@@ -54,6 +58,7 @@ export abstract class ElementBase extends ParentElement {
   protected contentSize: IntPoint = new IntPoint(0, 0);
   protected stage: ElementStage = "queued";
   protected zIndex: number;
+  protected positionMode: PositionMode;
 
   constructor(config: ElementConfig) {
     super();
@@ -61,6 +66,7 @@ export abstract class ElementBase extends ParentElement {
     this.view = config.view;
     this.parent = null;
     this.zIndex = config.zIndex ?? 0;
+    this.positionMode = config.position ?? "flow";
 
     this.offset = new IntPoint(config.xOffset || 0, config.yOffset || 0);
 
@@ -87,6 +93,7 @@ export abstract class ElementBase extends ParentElement {
   public getZIndex = () => this.zIndex;
   public getSizingMethod = () => this.sizingMethod;
   public getParent = () => this.parent;
+  public getPositionMode = () => this.positionMode;
 
   // setters
   public setPosition(p: IntPoint): void {
@@ -145,4 +152,52 @@ export abstract class ElementBase extends ParentElement {
    * Hook for subclasses to respond to size changes (e.g., update scroll div)
    */
   protected onSizeChanged(_oldSize: IntPoint, _newSize: IntPoint): void {}
+
+  /**
+   * Update base config fields. Does NOT call reprocessContent() — the caller
+   * is expected to batch all updates and call reprocessContent() once at the end.
+   */
+  public updateBaseConfig(partial: Partial<ElementConfig>): void {
+    if (partial.xOffset !== undefined || partial.yOffset !== undefined) {
+      this.offset = new IntPoint(
+        partial.xOffset ?? this.offset.getX(),
+        partial.yOffset ?? this.offset.getY()
+      );
+    }
+
+    if (partial.zIndex !== undefined) {
+      this.zIndex = partial.zIndex;
+    }
+    if (partial.position !== undefined) {
+      this.positionMode = partial.position;
+    }
+
+    // Update sizing method and size/relativeSize
+    const widthTypeChanged = partial.widthType !== undefined;
+    const heightTypeChanged = partial.heightType !== undefined;
+    const widthChanged = partial.width !== undefined;
+    const heightChanged = partial.height !== undefined;
+
+    if (widthTypeChanged || widthChanged) {
+      this.sizingMethod.x =
+        partial.widthType || (partial.width !== undefined ? "absolute" : this.sizingMethod.x);
+      if (this.sizingMethod.x === "absolute" && partial.width !== undefined) {
+        this.size.set(X, partial.width);
+      }
+      if (this.sizingMethod.x === "relative" && partial.width !== undefined) {
+        this.relativeSize = new NormPoint(partial.width, this.relativeSize.get(Y));
+      }
+    }
+
+    if (heightTypeChanged || heightChanged) {
+      this.sizingMethod.y =
+        partial.heightType || (partial.height !== undefined ? "absolute" : this.sizingMethod.y);
+      if (this.sizingMethod.y === "absolute" && partial.height !== undefined) {
+        this.size.set(Y, partial.height);
+      }
+      if (this.sizingMethod.y === "relative" && partial.height !== undefined) {
+        this.relativeSize = new NormPoint(this.relativeSize.get(X), partial.height);
+      }
+    }
+  }
 }
