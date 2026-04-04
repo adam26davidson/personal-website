@@ -23,14 +23,24 @@ Add animations to elements:
 ```ts
 import { DefaultAnimationHandler } from "@adam26davidson/char-matrix-fx";
 
+const handler = new DefaultAnimationHandler(null, view, {
+  entrance: {
+    type: "rowTracer",
+    config: { tailLength: 20, headSpeed: 3, randomizationRange: 5, use: "entrance" },
+  },
+  exit: {
+    type: "diagonalSwipe",
+    config: { slant: 4, tailLength: 30, headSpeed: 3, randomizationRange: 5, use: "exit" },
+  },
+});
+
 const element = new TextElement({
   key: "greeting",
   view: myRenderTarget,
   text: "Hello!",
-  animationHandler: new DefaultAnimationHandler(myRenderTarget, {
-    animationType: "diagonalSwipe",
-  }),
+  animationHandler: handler,
 });
+handler.setElement(element);
 ```
 
 Add spring lattice physics:
@@ -42,15 +52,23 @@ import {
 } from "@adam26davidson/char-matrix-fx";
 
 const lattice = new SpringLattice();
-const transform = new SpringLatticeSurfaceTransform(lattice);
+lattice.initialize(width, height, 3000);
+myView.addSurfaceTransform(new SpringLatticeSurfaceTransform(lattice));
 
-// Register as a surface transform on your render target
-myView.addSurfaceTransform(transform);
+// Update physics on a 20ms interval
+setInterval(() => lattice.update(), 20);
 
-// Update attractor position on mouse move
+// Set attractor position on mouse interaction
 lattice.setAttractorPosition(x, y);
+lattice.setAttractorOn();
 ```
 
 ## Peer dependencies
 
 - `@adam26davidson/char-matrix`
+
+## Related packages
+
+- [`@adam26davidson/char-matrix`](https://www.npmjs.com/package/@adam26davidson/char-matrix) — Core layout and rendering engine
+- [`@adam26davidson/char-matrix-react`](https://www.npmjs.com/package/@adam26davidson/char-matrix-react) — Embed React components inside a character matrix layout
+- [`@adam26davidson/char-matrix-react-renderer`](https://www.npmjs.com/package/@adam26davidson/char-matrix-react-renderer) — Declarative React JSX renderer for char-matrix element trees
