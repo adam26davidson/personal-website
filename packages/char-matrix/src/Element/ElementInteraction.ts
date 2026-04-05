@@ -18,8 +18,17 @@ export abstract class ElementInteraction extends ElementDrawing {
     this.cursor = config.cursor || "default";
   }
 
-  public setOnClick(onClick: () => void): void {
+  public setOnClick(onClick: (() => void) | null): void {
     this.onclick = onClick;
+  }
+
+  /**
+   * Update interaction config fields. Does NOT call reprocessContent().
+   */
+  public updateInteractionConfig(partial: Partial<ElementConfig>): void {
+    if (partial.cursor !== undefined) {
+      this.cursor = partial.cursor;
+    }
   }
 
   public getAnimationHandler(): ElementAnimationHandler | null {

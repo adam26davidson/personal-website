@@ -48,6 +48,10 @@ export class DefaultAnimationHandler implements ElementAnimationHandler {
       config,
       onComplete
     );
+
+    // Signal the render loop to keep rendering during this animation
+    this.view.getRenderLoop?.()?.requestContinuousRendering(this);
+
     return true;
   }
 
@@ -55,6 +59,8 @@ export class DefaultAnimationHandler implements ElementAnimationHandler {
     if (this.animation) {
       if (this.animation.runStep(offset)) {
         this.animation = null;
+        // Release the render loop now that the animation is done
+        this.view.getRenderLoop?.()?.releaseContinuousRendering(this);
       }
     }
   }

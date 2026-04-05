@@ -13,6 +13,8 @@ export type ElementStage =
   | "exiting"
   | "exited";
 
+export type PositionMode = "flow" | "absolute";
+
 export interface ElementConfig {
   key: string;
   view: RenderTarget;
@@ -38,6 +40,8 @@ export interface ElementConfig {
   exitTiming?: "parallel" | "series";
   /** Draw priority. Higher values render on top of lower values. Default: 0 */
   zIndex?: number;
+  /** Positioning mode. "flow" (default) participates in parent layout; "absolute" is positioned freely via xOffset/yOffset. */
+  position?: PositionMode;
 }
 
 export abstract class ElementBase extends ParentElement {
@@ -54,6 +58,7 @@ export abstract class ElementBase extends ParentElement {
   protected contentSize: IntPoint = new IntPoint(0, 0);
   protected stage: ElementStage = "queued";
   protected zIndex: number;
+  protected positionMode: PositionMode;
 
   constructor(config: ElementConfig) {
     super();
@@ -61,12 +66,13 @@ export abstract class ElementBase extends ParentElement {
     this.view = config.view;
     this.parent = null;
     this.zIndex = config.zIndex ?? 0;
+    this.positionMode = config.position ?? "flow";
 
     this.offset = new IntPoint(config.xOffset || 0, config.yOffset || 0);
 
     this.sizingMethod = {
-      x: config.widthType || (config.width ? "absolute" : "content"),
-      y: config.heightType || (config.height ? "absolute" : "content"),
+      x: ElementBase.resolveSizingMethod(config.widthType, config.width),
+      y: ElementBase.resolveSizingMethod(config.heightType, config.height),
     };
 
     for (const a of AXES) {
@@ -78,6 +84,19 @@ export abstract class ElementBase extends ParentElement {
     this.relativeSize = new NormPoint(config.width || 1, config.height || 1);
   }
 
+  /**
+   * Resolve a sizing method from an explicit type and/or a dimension value.
+   * Shared by the constructor and updateBaseConfig to keep inference consistent.
+   */
+  private static resolveSizingMethod(
+    explicitType: SizingMethod | undefined,
+    value: number | undefined
+  ): SizingMethod {
+    if (explicitType !== undefined) return explicitType;
+    if (value !== undefined) return "absolute";
+    return "content";
+  }
+
   // getters
   public getSize = () => this.size;
   public getRelativeSize = () => this.relativeSize;
@@ -87,6 +106,7 @@ export abstract class ElementBase extends ParentElement {
   public getZIndex = () => this.zIndex;
   public getSizingMethod = () => this.sizingMethod;
   public getParent = () => this.parent;
+  public getPositionMode = () => this.positionMode;
 
   // setters
   public setPosition(p: IntPoint): void {
@@ -145,4 +165,59 @@ export abstract class ElementBase extends ParentElement {
    * Hook for subclasses to respond to size changes (e.g., update scroll div)
    */
   protected onSizeChanged(_oldSize: IntPoint, _newSize: IntPoint): void {}
+
+  /**
+   * Update base config fields. Does NOT call reprocessContent() — the caller
+   * is expected to batch all updates and call reprocessContent() once at the end.
+   */
+  public updateBaseConfig(partial: Partial<ElementConfig>): void {
+    if (partial.xOffset !== undefined || partial.yOffset !== undefined) {
+      this.offset = new IntPoint(
+        partial.xOffset ?? this.offset.getX(),
+        partial.yOffset ?? this.offset.getY()
+      );
+    }
+
+    if (partial.zIndex !== undefined) {
+      this.zIndex = partial.zIndex;
+    }
+    if (partial.position !== undefined) {
+      this.positionMode = partial.position;
+    }
+
+    // Update sizing method and size/relativeSize
+    this.updateSizingAxis(
+      "x", X, partial.widthType, partial.width,
+      (v) => new NormPoint(v, this.relativeSize.get(Y))
+    );
+    this.updateSizingAxis(
+      "y", Y, partial.heightType, partial.height,
+      (v) => new NormPoint(this.relativeSize.get(X), v)
+    );
+  }
+
+  private updateSizingAxis(
+    axisKey: "x" | "y",
+    axis: import("../types/Axes").Axis,
+    explicitType: SizingMethod | undefined,
+    value: number | undefined,
+    makeRelativeSize: (v: number) => NormPoint
+  ): void {
+    if (explicitType === undefined && value === undefined) return;
+
+    // When explicitType is provided, use it directly. Otherwise infer from value.
+    this.sizingMethod[axisKey] = ElementBase.resolveSizingMethod(
+      explicitType,
+      explicitType !== undefined ? undefined : value
+    );
+
+    if (value !== undefined) {
+      if (this.sizingMethod[axisKey] === "absolute") {
+        this.size.set(axis, value);
+      }
+      if (this.sizingMethod[axisKey] === "relative") {
+        this.relativeSize = makeRelativeSize(value);
+      }
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import { IntPoint } from "../types/IntPoint";
 import type { CursorType } from "../Element/ElementBase";
 import type { Element } from "../Element/Element";
+import type { RenderLoopController } from "../RenderLoopController";
 
 /**
  * Interface that decouples elements from the concrete MatrixView.
@@ -38,4 +39,11 @@ export interface RenderTarget {
   // --- Root element management ---
   setRoot(element: Element): void;
   getRoot(): Element;
+
+  // --- Overlay management (optional) ---
+  addOverlay?(element: Element): void;
+  removeOverlay?(element: Element): void;
+
+  // --- Render loop (optional) ---
+  getRenderLoop?(): RenderLoopController;
 }

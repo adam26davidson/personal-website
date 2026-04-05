@@ -17,18 +17,37 @@ import type {
   CursorType,
   ColumnDef,
   ElementAnimationHandler,
+  PositionMode,
 } from "@adam26davidson/char-matrix";
+
+// ---------------------------------------------------------------------------
+// Type guards for element instances
+// ---------------------------------------------------------------------------
+
+function isContainerElement(instance: Element): instance is ContainerElement {
+  return instance instanceof ContainerElement;
+}
+
+function isTextElement(instance: Element): instance is TextElement {
+  return instance instanceof TextElement;
+}
+
+function isTableElement(instance: Element): instance is TableElement {
+  return instance instanceof TableElement;
+}
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type CMElementType = "cm-container" | "cm-text" | "cm-table";
+export type CMElementType = "cm-container" | "cm-text" | "cm-table" | "cm-overlay";
 
 /** Props common to all char-matrix elements (mirrors ElementConfig minus view). */
 interface CMBaseProps {
   /** Standard React reconciliation key — stripped from props at runtime. */
   key?: string | number;
+  /** React ref — resolves to the underlying Element instance (typed as CMElementRef). */
+  ref?: React.Ref<any>;
   /** The char-matrix element key. React's `key` is stripped from props, so use `elementKey`. */
   elementKey: string;
   width?: number;
@@ -52,6 +71,9 @@ interface CMBaseProps {
   entranceTiming?: "parallel" | "series";
   exitTiming?: "parallel" | "series";
   zIndex?: number;
+  position?: PositionMode;
+  /** When this value changes, the element's entrance animation is re-triggered. */
+  animationKey?: string | number;
   onClick?: () => void;
 }
 
@@ -75,25 +97,43 @@ export interface CMTableProps extends CMBaseProps {
   showRowSeparators?: boolean;
 }
 
-export type CMProps = CMContainerProps | CMTextProps | CMTableProps;
+/** Overlay props — same as container, rendered into the overlay layer instead of the element tree. */
+export interface CMOverlayProps extends CMContainerProps {}
+
+export type CMProps = CMContainerProps | CMTextProps | CMTableProps | CMOverlayProps;
 
 /** The root container object passed to the reconciler. */
 export interface RootContainer {
   view: RenderTarget;
   rootElement: Element | null;
+  /** Elements tagged as overlays — bypass normal parent-child management. */
+  overlayInstances: WeakSet<Element>;
+}
+
+// ---------------------------------------------------------------------------
+// Overlay tracking
+// ---------------------------------------------------------------------------
+
+/** Map from element instance to the RootContainer it was created in. */
+const instanceRootMap = new WeakMap<Element, RootContainer>();
+
+function isOverlay(instance: Element): boolean {
+  const root = instanceRootMap.get(instance);
+  return root?.overlayInstances.has(instance) ?? false;
+}
+
+function unmarkOverlay(instance: Element): void {
+  const root = instanceRootMap.get(instance);
+  root?.overlayInstances.delete(instance);
 }
 
 // ---------------------------------------------------------------------------
 // Element creation helpers
 // ---------------------------------------------------------------------------
 
-function buildBaseConfig(
-  props: CMBaseProps,
-  view: RenderTarget
-): ElementConfig {
+/** Extract the shared base config fields from props (everything except key/view). */
+function extractBaseFields(props: CMBaseProps): Partial<ElementConfig> {
   return {
-    key: props.elementKey,
-    view,
     width: props.width,
     widthType: props.widthType,
     height: props.height,
@@ -115,7 +155,15 @@ function buildBaseConfig(
     entranceTiming: props.entranceTiming,
     exitTiming: props.exitTiming,
     zIndex: props.zIndex,
+    position: props.position,
   };
+}
+
+function buildBaseConfig(
+  props: CMBaseProps,
+  view: RenderTarget
+): ElementConfig {
+  return { key: props.elementKey, view, ...extractBaseFields(props) };
 }
 
 function createElement(
@@ -158,6 +206,17 @@ function createElement(
       } as TableElementConfig);
       break;
     }
+    case "cm-overlay": {
+      const p = props as CMOverlayProps;
+      instance = new ContainerElement({
+        ...base,
+        mainAxis: p.mainAxis,
+        justifyContent: p.justifyContent,
+        alignItems: p.alignItems,
+        spacing: p.spacing,
+      } as ContainerElementConfig);
+      break;
+    }
     default:
       throw new Error(`Unknown char-matrix element type: ${type}`);
   }
@@ -168,11 +227,9 @@ function createElement(
   }
 
   // Wire animation handler — DefaultAnimationHandler needs setElement() called
-  // after the element is constructed. Duck-type check since setElement is not
-  // on the ElementAnimationHandler interface.
-  const handler = props.animationHandler as any;
-  if (handler?.setElement) {
-    handler.setElement(instance);
+  // after the element is constructed.
+  if (props.animationHandler?.setElement) {
+    props.animationHandler.setElement(instance);
   }
 
   return instance;
@@ -235,7 +292,12 @@ export const hostConfig: any = {
     props: Props,
     rootContainer: RootContainer
   ): Instance {
-    return createElement(type, props, rootContainer.view);
+    const instance = createElement(type, props, rootContainer.view);
+    instanceRootMap.set(instance, rootContainer);
+    if (type === "cm-overlay") {
+      rootContainer.overlayInstances.add(instance);
+    }
+    return instance;
   },
 
   createTextInstance(): TextInstance {
@@ -246,6 +308,10 @@ export const hostConfig: any = {
 
   // --------------- Children (mutation mode) ---------------
   appendInitialChild(parent: Instance, child: Instance) {
+    if (isOverlay(child)) {
+      // Overlays are deferred to commitMount — skip normal child tracking.
+      return;
+    }
     const children = getTrackedChildren(parent);
     children.push(child);
     // Don't commit yet — React calls this during the "complete" phase.
@@ -253,12 +319,25 @@ export const hostConfig: any = {
   },
 
   appendChild(parent: Instance, child: Instance) {
+    if (isOverlay(child)) {
+      const root = instanceRootMap.get(child);
+      if (root?.view.addOverlay) {
+        root.view.addOverlay(child);
+      }
+      return;
+    }
     const children = getTrackedChildren(parent);
     children.push(child);
     commitChildren(parent);
   },
 
   appendChildToContainer(container: RootContainer, child: Instance) {
+    if (isOverlay(child)) {
+      if (container.view.addOverlay) {
+        container.view.addOverlay(child);
+      }
+      return;
+    }
     container.rootElement = child;
     // Use setRoot if available (MatrixView implements this) for full integration
     // with the render loop. Falls back to registerWithView for basic targets.
@@ -270,6 +349,13 @@ export const hostConfig: any = {
   },
 
   insertBefore(parent: Instance, child: Instance, beforeChild: Instance) {
+    if (isOverlay(child)) {
+      const root = instanceRootMap.get(child);
+      if (root?.view.addOverlay) {
+        root.view.addOverlay(child);
+      }
+      return;
+    }
     const children = getTrackedChildren(parent);
     const idx = children.indexOf(beforeChild);
     if (idx >= 0) {
@@ -285,6 +371,12 @@ export const hostConfig: any = {
     child: Instance,
     _beforeChild: Instance
   ) {
+    if (isOverlay(child)) {
+      if (container.view.addOverlay) {
+        container.view.addOverlay(child);
+      }
+      return;
+    }
     container.rootElement = child;
     if ((container.view as any).setRoot) {
       (container.view as any).setRoot(child);
@@ -294,6 +386,14 @@ export const hostConfig: any = {
   },
 
   removeChild(parent: Instance, child: Instance) {
+    if (isOverlay(child)) {
+      const root = instanceRootMap.get(child);
+      if (root?.view.removeOverlay) {
+        root.view.removeOverlay(child);
+      }
+      unmarkOverlay(child);
+      return;
+    }
     const children = getTrackedChildren(parent);
     const idx = children.indexOf(child);
     if (idx >= 0) {
@@ -304,6 +404,13 @@ export const hostConfig: any = {
   },
 
   removeChildFromContainer(container: RootContainer, child: Instance) {
+    if (isOverlay(child)) {
+      if (container.view.removeOverlay) {
+        container.view.removeOverlay(child);
+      }
+      unmarkOverlay(child);
+      return;
+    }
     child.unregisterWithView();
     if (container.rootElement === child) {
       container.rootElement = null;
@@ -325,8 +432,9 @@ export const hostConfig: any = {
     newProps: Props,
   ): object | null {
     // Return a truthy payload if any prop (other than children) changed.
-    const oKeys = Object.keys(oldProps).filter((k) => k !== "children");
-    const nKeys = Object.keys(newProps).filter((k) => k !== "children");
+    const skipKeys = new Set(["children", "key", "ref", "elementKey"]);
+    const oKeys = Object.keys(oldProps).filter((k) => !skipKeys.has(k));
+    const nKeys = Object.keys(newProps).filter((k) => !skipKeys.has(k));
     if (oKeys.length !== nKeys.length) return { changed: true };
     for (const k of oKeys) {
       if ((oldProps as any)[k] !== (newProps as any)[k]) return { changed: true };
@@ -338,22 +446,65 @@ export const hostConfig: any = {
     instance: Instance,
     _updatePayload: object,
     type: Type,
-    oldProps: Props,
+    _oldProps: Props,
     newProps: Props,
   ) {
-    // Update text content
-    if (type === "cm-text") {
-      const oldText = (oldProps as CMTextProps).text;
-      const newText = (newProps as CMTextProps).text;
-      if (oldText !== newText) {
-        (instance as any).setBaseText(newText);
+    const base = extractBaseFields(newProps);
+
+    // Delegate to the element-type-specific batch update method.
+    switch (type) {
+      case "cm-container":
+      case "cm-overlay": {
+        const p = newProps as CMContainerProps;
+        if (isContainerElement(instance)) {
+          instance.updateContainerConfig({
+            ...base,
+            mainAxis: p.mainAxis,
+            justifyContent: p.justifyContent,
+            alignItems: p.alignItems,
+            spacing: p.spacing,
+          });
+        }
+        break;
+      }
+      case "cm-text": {
+        const p = newProps as CMTextProps;
+        if (isTextElement(instance)) {
+          instance.updateTextConfig({
+            ...base,
+            text: p.text,
+            hoverTransform: p.hoverTransform,
+          });
+        }
+        break;
+      }
+      case "cm-table": {
+        const p = newProps as CMTableProps;
+        if (isTableElement(instance)) {
+          instance.updateTableConfig({
+            ...base,
+            columns: p.columns,
+            title: p.title,
+            titleAlign: p.titleAlign,
+            showRowSeparators: p.showRowSeparators,
+          });
+        }
+        break;
       }
     }
 
-    // Update onClick handler
-    if (oldProps.onClick !== newProps.onClick) {
-      if (newProps.onClick) {
-        instance.setOnClick(newProps.onClick);
+    // Update or clear onClick handler
+    if (_oldProps.onClick !== newProps.onClick) {
+      instance.setOnClick(newProps.onClick ?? null);
+    }
+
+    // Re-trigger entrance animation when animationKey changes
+    if (
+      _oldProps.animationKey !== newProps.animationKey &&
+      newProps.animationKey != null
+    ) {
+      if (instance.getStage() === "main") {
+        instance.startTransition("enter");
       }
     }
   },
@@ -365,6 +516,21 @@ export const hostConfig: any = {
 
   commitMount(instance: Instance) {
     // Called after finalizeInitialChildren returns true.
+
+    // If this is an overlay, add it to the view's overlay layer now.
+    if (isOverlay(instance)) {
+      const root = instanceRootMap.get(instance);
+      if (root?.view.addOverlay) {
+        // First commit its own tracked children (it's a container)
+        const children = getTrackedChildren(instance);
+        if (children.length > 0) {
+          instance.setChildren([...children]);
+        }
+        root.view.addOverlay(instance);
+      }
+      return;
+    }
+
     // Commit the tracked children now that the initial tree is assembled.
     const children = getTrackedChildren(instance);
     if (children.length > 0) {

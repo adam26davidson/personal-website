@@ -58,11 +58,37 @@ export abstract class Element extends ElementInteraction {
 
   public getIsOnView = () => this.isOnView;
 
+  /**
+   * Update element-level config fields (transition timing).
+   * Does NOT call reprocessContent().
+   */
+  public updateElementConfig(partial: Partial<ElementConfig>): void {
+    if (partial.entranceTiming !== undefined) {
+      this.entranceSequenceTiming = partial.entranceTiming;
+    }
+    if (partial.exitTiming !== undefined) {
+      this.exitSequenceTiming = partial.exitTiming;
+    }
+  }
+
+  /**
+   * Update all shared config layers (base, layout, drawing, interaction, element).
+   * Does NOT call reprocessContent() or flagForRedraw() — the caller handles those.
+   */
+  protected updateCommonConfig(partial: Partial<ElementConfig>): void {
+    this.updateBaseConfig(partial);
+    this.updateLayoutConfig(partial);
+    this.updateDrawingConfig(partial);
+    this.updateInteractionConfig(partial);
+    this.updateElementConfig(partial);
+  }
+
   // --- child management ---
 
   public setChildren(children: Element[]) {
     this.children.forEach((child) => child.unregisterWithView());
     this.children = children;
+    this.updateFlowChildren();
     this.children.forEach((child) => {
       child.setParent(this);
       if (this.isOnView) {
@@ -72,7 +98,7 @@ export abstract class Element extends ElementInteraction {
     });
     this.resizeChildren();
     this.reprocessContent();
-    if (this.stage === "queued") {
+    if (this.stage !== "exiting" && this.stage !== "exited") {
       this.entranceSequence = new TransitionSequence(
         this.children,
         this.entranceSequenceTiming,
@@ -107,6 +133,7 @@ export abstract class Element extends ElementInteraction {
         );
         exitedChildren.forEach((child) => child.unregisterWithView());
         this.children = newChildren;
+        this.updateFlowChildren();
         this.reprocessContent();
         this.flagForRedraw();
       }
@@ -182,6 +209,17 @@ export abstract class Element extends ElementInteraction {
     if (!animationStarted) {
       // No animation handler or no config for this type — instant transition
       onTransition();
+    }
+
+    // For enter transitions, reset children in the entrance sequence to
+    // "queued" so they're hidden until the sequence starts their individual
+    // entrance animation. This ensures reused elements (e.g. from React
+    // reconciliation) properly replay their entrance animation instead of
+    // remaining visible from a previous render.
+    if (type === "enter") {
+      for (const child of sequence.extractAll()) {
+        child.stage = "queued";
+      }
     }
 
     sequence.setonComplete(onTransition);

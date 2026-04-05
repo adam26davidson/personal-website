@@ -32,4 +32,10 @@ export interface ElementAnimationHandler {
    * Used when additional onComplete handlers are added after animation starts.
    */
   setOnComplete(onComplete: () => void): void;
+
+  /**
+   * Set the element reference. Called after construction when the handler
+   * is passed as a config option to the element constructor.
+   */
+  setElement?(element: import("../Element/Element").Element): void;
 }

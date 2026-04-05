@@ -76,6 +76,7 @@ export class TableElement extends Element {
     }
 
     this.children = this.elementCells.map((ec) => ec.element);
+    this.updateFlowChildren();
     for (const child of this.children) {
       child.setParent(this);
       if (this.isOnView) {
@@ -83,6 +84,31 @@ export class TableElement extends Element {
       }
     }
 
+    this.reprocessContent();
+    this.flagForRedraw();
+  }
+
+  /**
+   * Batch-update all table config fields, then reprocess once.
+   */
+  public updateTableConfig(partial: Partial<TableElementConfig>): void {
+    this.updateCommonConfig(partial);
+
+    // Table-specific fields
+    if (partial.columns !== undefined) {
+      this.columns = partial.columns;
+    }
+    if (partial.title !== undefined) {
+      this.title = partial.title;
+    }
+    if (partial.titleAlign !== undefined) {
+      this.titleAlign = partial.titleAlign;
+    }
+    if (partial.showRowSeparators !== undefined) {
+      this.showRowSeparators = partial.showRowSeparators;
+    }
+
+    // Single reprocess + redraw
     this.reprocessContent();
     this.flagForRedraw();
   }
