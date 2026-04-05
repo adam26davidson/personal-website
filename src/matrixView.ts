@@ -92,7 +92,10 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
   public getNumColumns = () => this.size.getX();
   public getNumRows = () => this.size.getY();
   public getBackgroundChar = () => DEFAULT_BACKGROUND_CHAR;
-  public setRoute = (route: string) => this.matrixController.setRoute(route);
+  public setRoute = (route: string) => {
+    if (!this.isInitialized) return;
+    this.matrixController.setRoute(route);
+  };
   public setNavigate = (navigate: NavigateFunction) =>
     this.matrixController.setNavigate(navigate);
 
