@@ -175,6 +175,7 @@ class MatrixView extends ParentElement implements ReactRenderTarget {
     oldRoot.unregisterWithView();
 
     this.children = [element];
+    this.updateFlowChildren();
     element.setParent(this);
     this.rootElement = element;
     element.registerWithView();

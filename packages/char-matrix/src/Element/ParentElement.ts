@@ -4,6 +4,7 @@ import { IntPoint } from "../types/IntPoint";
 
 export abstract class ParentElement {
   protected children: Element[] = [];
+  protected flowChildren: Element[] = [];
   protected spacing: number = 0;
 
   abstract getSize(): IntPoint;
@@ -21,14 +22,18 @@ export abstract class ParentElement {
 
   private isResizingChildren = false;
 
+  /** Recompute the cached flowChildren array. Call after modifying this.children. */
+  protected updateFlowChildren(): void {
+    this.flowChildren = this.children.filter(
+      (c) => c.getPositionMode() === "flow"
+    );
+  }
+
   protected resizeChildren() {
     if (this.isResizingChildren) return;
     this.isResizingChildren = true;
 
-    // Only flow children participate in relative/expand sizing calculations
-    const flowChildren = this.children.filter(
-      (c) => c.getPositionMode() === "flow"
-    );
+    const flowChildren = this.flowChildren;
 
     const childSizes = flowChildren.map((c) => c.getSize().copy());
     const totalBoundarySize = this.getTotalBoundarySize();

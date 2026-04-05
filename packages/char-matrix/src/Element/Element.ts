@@ -71,11 +71,24 @@ export abstract class Element extends ElementInteraction {
     }
   }
 
+  /**
+   * Update all shared config layers (base, layout, drawing, interaction, element).
+   * Does NOT call reprocessContent() or flagForRedraw() — the caller handles those.
+   */
+  protected updateCommonConfig(partial: Partial<ElementConfig>): void {
+    this.updateBaseConfig(partial);
+    this.updateLayoutConfig(partial);
+    this.updateDrawingConfig(partial);
+    this.updateInteractionConfig(partial);
+    this.updateElementConfig(partial);
+  }
+
   // --- child management ---
 
   public setChildren(children: Element[]) {
     this.children.forEach((child) => child.unregisterWithView());
     this.children = children;
+    this.updateFlowChildren();
     this.children.forEach((child) => {
       child.setParent(this);
       if (this.isOnView) {
@@ -120,6 +133,7 @@ export abstract class Element extends ElementInteraction {
         );
         exitedChildren.forEach((child) => child.unregisterWithView());
         this.children = newChildren;
+        this.updateFlowChildren();
         this.reprocessContent();
         this.flagForRedraw();
       }

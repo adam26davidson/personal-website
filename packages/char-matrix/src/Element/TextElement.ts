@@ -52,12 +52,7 @@ export default class TextElement extends Element {
    * Batch-update all text config fields, then reprocess once.
    */
   public updateTextConfig(partial: Partial<TextElementConfig>): void {
-    // Delegate to hierarchy layers (no reprocess yet)
-    this.updateBaseConfig(partial);
-    this.updateLayoutConfig(partial);
-    this.updateDrawingConfig(partial);
-    this.updateInteractionConfig(partial);
-    this.updateElementConfig(partial);
+    this.updateCommonConfig(partial);
 
     // Text-specific fields
     if (partial.hoverTransform !== undefined) {
@@ -65,11 +60,13 @@ export default class TextElement extends Element {
     }
 
     if (partial.text !== undefined) {
-      // setBaseText calls reprocessContent internally
-      this.setBaseText(partial.text);
-    } else {
-      this.reprocessContent();
+      // Update text fields directly — reprocessContent below handles the rest.
+      // Avoids calling setBaseText which would trigger a redundant reprocessContent.
+      this.templateText = this.replaceSpaceWithBreakingSpace(partial.text);
+      this.untransformedTemplateText = this.templateText;
     }
+
+    this.reprocessContent();
     this.flagForRedraw();
   }
 

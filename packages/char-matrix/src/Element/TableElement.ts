@@ -76,6 +76,7 @@ export class TableElement extends Element {
     }
 
     this.children = this.elementCells.map((ec) => ec.element);
+    this.updateFlowChildren();
     for (const child of this.children) {
       child.setParent(this);
       if (this.isOnView) {
@@ -91,12 +92,7 @@ export class TableElement extends Element {
    * Batch-update all table config fields, then reprocess once.
    */
   public updateTableConfig(partial: Partial<TableElementConfig>): void {
-    // Delegate to hierarchy layers (no reprocess yet)
-    this.updateBaseConfig(partial);
-    this.updateLayoutConfig(partial);
-    this.updateDrawingConfig(partial);
-    this.updateInteractionConfig(partial);
-    this.updateElementConfig(partial);
+    this.updateCommonConfig(partial);
 
     // Table-specific fields
     if (partial.columns !== undefined) {

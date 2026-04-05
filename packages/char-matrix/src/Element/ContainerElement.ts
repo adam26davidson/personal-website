@@ -32,12 +32,7 @@ export class ContainerElement extends Element {
    * Batch-update all container config fields, then reprocess once.
    */
   public updateContainerConfig(partial: Partial<ContainerElementConfig>): void {
-    // Delegate to hierarchy layers (no reprocess yet)
-    this.updateBaseConfig(partial);
-    this.updateLayoutConfig(partial);
-    this.updateDrawingConfig(partial);
-    this.updateInteractionConfig(partial);
-    this.updateElementConfig(partial);
+    this.updateCommonConfig(partial);
 
     // Container-specific fields
     if (partial.mainAxis !== undefined) {
@@ -62,11 +57,7 @@ export class ContainerElement extends Element {
   protected reprocessContent() {
     const ma = this.mainAxis; // main axis
     const sa = this.secondaryAxis; // secondary axis
-
-    // Compute flow children once for all calculations
-    const flowChildren = this.children.filter(
-      (c) => c.getPositionMode() === "flow"
-    );
+    const flowChildren = this.flowChildren;
 
     const size = this.calculateSize(flowChildren);
 

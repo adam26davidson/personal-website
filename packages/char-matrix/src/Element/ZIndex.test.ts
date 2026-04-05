@@ -72,6 +72,7 @@ class TestRenderTarget extends ParentElement implements RenderTarget {
   setRoot(element: Element): void {
     this.children.forEach((child) => child.unregisterWithView());
     this.children = [element];
+    this.updateFlowChildren();
     element.setParent(this);
     element.registerWithView();
     this.resizeChildren();

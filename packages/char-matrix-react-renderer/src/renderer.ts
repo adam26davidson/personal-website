@@ -21,7 +21,11 @@ export function render(element: ReactNode, view: RenderTarget): Element {
   let entry = roots.get(view);
 
   if (!entry) {
-    const container: RootContainer = { view, rootElement: null };
+    const container: RootContainer = {
+      view,
+      rootElement: null,
+      overlayInstances: new WeakSet(),
+    };
     const fiberRoot = reconciler.createContainer(
       container,
       0, // LegacyRoot tag

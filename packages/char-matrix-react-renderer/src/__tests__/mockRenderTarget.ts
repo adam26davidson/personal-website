@@ -66,7 +66,8 @@ export function createMockRenderTarget(
       element.registerWithView();
     },
     getRoot(): Element {
-      return rootElement!;
+      if (!rootElement) throw new Error("getRoot() called before setRoot()");
+      return rootElement;
     },
   };
 

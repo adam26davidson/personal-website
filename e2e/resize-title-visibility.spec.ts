@@ -55,6 +55,22 @@ async function waitForMatrixReady(
   );
 }
 
+/** Wait for a specific marker to appear in the matrix (polls via waitForFunction). */
+async function waitForMarker(
+  page: import("@playwright/test").Page,
+  marker: string,
+  timeout = 20000
+): Promise<void> {
+  await page.waitForFunction(
+    ([sel, t]) => {
+      const el = document.querySelector(sel);
+      return el ? el.textContent?.includes(t) ?? false : false;
+    },
+    [MATRIX_SELECTOR, marker] as const,
+    { timeout }
+  );
+}
+
 test.describe("title visible after resize: desktop → mobile", () => {
   test.use({ viewport: DESKTOP_VIEWPORT });
 
@@ -64,16 +80,15 @@ test.describe("title visible after resize: desktop → mobile", () => {
     await page.goto("/");
     await waitForMatrixReady(page);
     // Wait for the large title entrance animation to complete
-    await page.waitForTimeout(8000);
+    await waitForMarker(page, LARGE_TITLE_MARKER);
 
     // Large ASCII art title should be visible at desktop size
     expect(await matrixContains(page, LARGE_TITLE_MARKER)).toBe(true);
 
-    // Resize to mobile
+    // Resize to mobile — medium title should eventually appear
     await page.setViewportSize(MOBILE_VIEWPORT);
-    await page.waitForTimeout(8000);
+    await waitForMarker(page, MEDIUM_TITLE_MARKER);
 
-    // After resize, medium title (braille) should appear
     expect(await matrixContains(page, MEDIUM_TITLE_MARKER)).toBe(true);
   });
 
@@ -82,16 +97,15 @@ test.describe("title visible after resize: desktop → mobile", () => {
   }) => {
     await page.goto("/about/");
     await waitForMatrixReady(page);
-    await page.waitForTimeout(5000);
+    await waitForMarker(page, MEDIUM_TITLE_MARKER);
 
     // Desktop content page has medium title in sidebar
     expect(await matrixContains(page, MEDIUM_TITLE_MARKER)).toBe(true);
 
-    // Resize to mobile
+    // Resize to mobile — small title should eventually appear
     await page.setViewportSize(MOBILE_VIEWPORT);
-    await page.waitForTimeout(8000);
+    await waitForMarker(page, SMALL_TITLE_MARKER);
 
-    // Mobile content page has small title "Adam Davidson" in header
     expect(await matrixContains(page, SMALL_TITLE_MARKER)).toBe(true);
   });
 });
@@ -104,16 +118,15 @@ test.describe("title visible after resize: mobile → desktop", () => {
   }) => {
     await page.goto("/");
     await waitForMatrixReady(page);
-    await page.waitForTimeout(5000);
+    await waitForMarker(page, MEDIUM_TITLE_MARKER);
 
     // Mobile title page shows medium braille title
     expect(await matrixContains(page, MEDIUM_TITLE_MARKER)).toBe(true);
 
-    // Resize to desktop
+    // Resize to desktop — large title should eventually appear
     await page.setViewportSize(DESKTOP_VIEWPORT);
-    await page.waitForTimeout(8000);
+    await waitForMarker(page, LARGE_TITLE_MARKER);
 
-    // After resize, large ASCII art title should appear
     expect(await matrixContains(page, LARGE_TITLE_MARKER)).toBe(true);
   });
 
@@ -122,16 +135,15 @@ test.describe("title visible after resize: mobile → desktop", () => {
   }) => {
     await page.goto("/about/");
     await waitForMatrixReady(page);
-    await page.waitForTimeout(5000);
+    await waitForMarker(page, SMALL_TITLE_MARKER);
 
     // Mobile content page has small title
     expect(await matrixContains(page, SMALL_TITLE_MARKER)).toBe(true);
 
-    // Resize to desktop
+    // Resize to desktop — medium title should eventually appear
     await page.setViewportSize(DESKTOP_VIEWPORT);
-    await page.waitForTimeout(8000);
+    await waitForMarker(page, MEDIUM_TITLE_MARKER);
 
-    // Desktop content page has medium braille title in sidebar
     expect(await matrixContains(page, MEDIUM_TITLE_MARKER)).toBe(true);
   });
 });

@@ -51,6 +51,21 @@ async function waitForMatrixReady(
   );
 }
 
+/** Wait for "ABOUT" link to appear in the matrix. */
+async function waitForLinks(
+  page: import("@playwright/test").Page,
+  timeout = 20000
+): Promise<void> {
+  await page.waitForFunction(
+    ([sel, t]) => {
+      const el = document.querySelector(sel);
+      return el ? el.textContent?.includes(t) ?? false : false;
+    },
+    [MATRIX_SELECTOR, "ABOUT"] as const,
+    { timeout }
+  );
+}
+
 test.describe("title page: links should animate in after resize", () => {
   test("desktop → mobile: links not visible immediately after resize", async ({
     page,
@@ -58,7 +73,8 @@ test.describe("title page: links should animate in after resize", () => {
     await page.setViewportSize(DESKTOP_VIEWPORT);
     await page.goto("/");
     await waitForMatrixReady(page);
-    await page.waitForTimeout(8000);
+    // Wait for links to appear via polling instead of hardcoded timeout
+    await waitForLinks(page);
 
     // Links should be visible at desktop size
     expect(await matrixContains(page, "ABOUT")).toBe(true);
@@ -72,7 +88,8 @@ test.describe("title page: links should animate in after resize", () => {
     expect(await matrixContains(page, "ABOUT", 500)).toBe(false);
 
     // After animations complete, links should be visible
-    expect(await matrixContains(page, "ABOUT", 15000)).toBe(true);
+    await waitForLinks(page);
+    expect(await matrixContains(page, "ABOUT")).toBe(true);
   });
 
   test("mobile → desktop: links not visible immediately after resize", async ({
@@ -81,7 +98,8 @@ test.describe("title page: links should animate in after resize", () => {
     await page.setViewportSize(MOBILE_VIEWPORT);
     await page.goto("/");
     await waitForMatrixReady(page);
-    await page.waitForTimeout(5000);
+    // Wait for links to appear via polling
+    await waitForLinks(page);
 
     // Links should be visible at mobile size
     expect(await matrixContains(page, "ABOUT")).toBe(true);
@@ -94,6 +112,7 @@ test.describe("title page: links should animate in after resize", () => {
     expect(await matrixContains(page, "ABOUT", 500)).toBe(false);
 
     // After animations complete, links should be visible
-    expect(await matrixContains(page, "ABOUT", 15000)).toBe(true);
+    await waitForLinks(page);
+    expect(await matrixContains(page, "ABOUT")).toBe(true);
   });
 });

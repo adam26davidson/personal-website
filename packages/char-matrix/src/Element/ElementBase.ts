@@ -71,8 +71,8 @@ export abstract class ElementBase extends ParentElement {
     this.offset = new IntPoint(config.xOffset || 0, config.yOffset || 0);
 
     this.sizingMethod = {
-      x: config.widthType || (config.width ? "absolute" : "content"),
-      y: config.heightType || (config.height ? "absolute" : "content"),
+      x: ElementBase.resolveSizingMethod(config.widthType, config.width),
+      y: ElementBase.resolveSizingMethod(config.heightType, config.height),
     };
 
     for (const a of AXES) {
@@ -82,6 +82,19 @@ export abstract class ElementBase extends ParentElement {
     }
 
     this.relativeSize = new NormPoint(config.width || 1, config.height || 1);
+  }
+
+  /**
+   * Resolve a sizing method from an explicit type and/or a dimension value.
+   * Shared by the constructor and updateBaseConfig to keep inference consistent.
+   */
+  private static resolveSizingMethod(
+    explicitType: SizingMethod | undefined,
+    value: number | undefined
+  ): SizingMethod {
+    if (explicitType !== undefined) return explicitType;
+    if (value !== undefined) return "absolute";
+    return "content";
   }
 
   // getters
@@ -173,32 +186,37 @@ export abstract class ElementBase extends ParentElement {
     }
 
     // Update sizing method and size/relativeSize
-    const widthTypeChanged = partial.widthType !== undefined;
-    const heightTypeChanged = partial.heightType !== undefined;
-    const widthChanged = partial.width !== undefined;
-    const heightChanged = partial.height !== undefined;
+    this.updateSizingAxis(
+      "x", X, partial.widthType, partial.width,
+      (v) => new NormPoint(v, this.relativeSize.get(Y))
+    );
+    this.updateSizingAxis(
+      "y", Y, partial.heightType, partial.height,
+      (v) => new NormPoint(this.relativeSize.get(X), v)
+    );
+  }
 
-    if (widthTypeChanged || widthChanged) {
-      this.sizingMethod.x = widthTypeChanged
-        ? partial.widthType!
-        : (partial.width !== undefined ? "absolute" : this.sizingMethod.x);
-      if (this.sizingMethod.x === "absolute" && partial.width !== undefined) {
-        this.size.set(X, partial.width);
-      }
-      if (this.sizingMethod.x === "relative" && partial.width !== undefined) {
-        this.relativeSize = new NormPoint(partial.width, this.relativeSize.get(Y));
-      }
-    }
+  private updateSizingAxis(
+    axisKey: "x" | "y",
+    axis: import("../types/Axes").Axis,
+    explicitType: SizingMethod | undefined,
+    value: number | undefined,
+    makeRelativeSize: (v: number) => NormPoint
+  ): void {
+    if (explicitType === undefined && value === undefined) return;
 
-    if (heightTypeChanged || heightChanged) {
-      this.sizingMethod.y = heightTypeChanged
-        ? partial.heightType!
-        : (partial.height !== undefined ? "absolute" : this.sizingMethod.y);
-      if (this.sizingMethod.y === "absolute" && partial.height !== undefined) {
-        this.size.set(Y, partial.height);
+    // When explicitType is provided, use it directly. Otherwise infer from value.
+    this.sizingMethod[axisKey] = ElementBase.resolveSizingMethod(
+      explicitType,
+      explicitType !== undefined ? undefined : value
+    );
+
+    if (value !== undefined) {
+      if (this.sizingMethod[axisKey] === "absolute") {
+        this.size.set(axis, value);
       }
-      if (this.sizingMethod.y === "relative" && partial.height !== undefined) {
-        this.relativeSize = new NormPoint(this.relativeSize.get(X), partial.height);
+      if (this.sizingMethod[axisKey] === "relative") {
+        this.relativeSize = makeRelativeSize(value);
       }
     }
   }

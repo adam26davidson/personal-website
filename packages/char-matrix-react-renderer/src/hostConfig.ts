@@ -106,29 +106,34 @@ export type CMProps = CMContainerProps | CMTextProps | CMTableProps | CMOverlayP
 export interface RootContainer {
   view: RenderTarget;
   rootElement: Element | null;
+  /** Elements tagged as overlays — bypass normal parent-child management. */
+  overlayInstances: WeakSet<Element>;
 }
 
 // ---------------------------------------------------------------------------
 // Overlay tracking
 // ---------------------------------------------------------------------------
 
-/** Elements tagged as overlays — bypass normal parent-child management. */
-const overlayInstances = new WeakSet<Element>();
-
 /** Map from element instance to the RootContainer it was created in. */
 const instanceRootMap = new WeakMap<Element, RootContainer>();
+
+function isOverlay(instance: Element): boolean {
+  const root = instanceRootMap.get(instance);
+  return root?.overlayInstances.has(instance) ?? false;
+}
+
+function unmarkOverlay(instance: Element): void {
+  const root = instanceRootMap.get(instance);
+  root?.overlayInstances.delete(instance);
+}
 
 // ---------------------------------------------------------------------------
 // Element creation helpers
 // ---------------------------------------------------------------------------
 
-function buildBaseConfig(
-  props: CMBaseProps,
-  view: RenderTarget
-): ElementConfig {
+/** Extract the shared base config fields from props (everything except key/view). */
+function extractBaseFields(props: CMBaseProps): Partial<ElementConfig> {
   return {
-    key: props.elementKey,
-    view,
     width: props.width,
     widthType: props.widthType,
     height: props.height,
@@ -154,35 +159,11 @@ function buildBaseConfig(
   };
 }
 
-/**
- * Build a partial config object from base props for use in commitUpdate.
- * Unlike buildBaseConfig, this does not require a view reference.
- */
-function buildPartialBaseConfig(props: CMBaseProps): Partial<ElementConfig> {
-  return {
-    width: props.width,
-    widthType: props.widthType,
-    height: props.height,
-    heightType: props.heightType,
-    scrollable: props.scrollable,
-    paddingTop: props.paddingTop,
-    paddingBottom: props.paddingBottom,
-    paddingLeft: props.paddingLeft,
-    paddingRight: props.paddingRight,
-    paddingX: props.paddingX,
-    paddingY: props.paddingY,
-    padding: props.padding,
-    bordered: props.bordered,
-    backgroundChar: props.backgroundChar,
-    cursor: props.cursor,
-    xOffset: props.xOffset,
-    yOffset: props.yOffset,
-    animationHandler: props.animationHandler,
-    entranceTiming: props.entranceTiming,
-    exitTiming: props.exitTiming,
-    zIndex: props.zIndex,
-    position: props.position,
-  };
+function buildBaseConfig(
+  props: CMBaseProps,
+  view: RenderTarget
+): ElementConfig {
+  return { key: props.elementKey, view, ...extractBaseFields(props) };
 }
 
 function createElement(
@@ -234,7 +215,6 @@ function createElement(
         alignItems: p.alignItems,
         spacing: p.spacing,
       } as ContainerElementConfig);
-      overlayInstances.add(instance);
       break;
     }
     default:
@@ -247,11 +227,9 @@ function createElement(
   }
 
   // Wire animation handler — DefaultAnimationHandler needs setElement() called
-  // after the element is constructed. Duck-type check since setElement is not
-  // on the ElementAnimationHandler interface.
-  const handler = props.animationHandler as any;
-  if (handler?.setElement) {
-    handler.setElement(instance);
+  // after the element is constructed.
+  if (props.animationHandler?.setElement) {
+    props.animationHandler.setElement(instance);
   }
 
   return instance;
@@ -316,6 +294,9 @@ export const hostConfig: any = {
   ): Instance {
     const instance = createElement(type, props, rootContainer.view);
     instanceRootMap.set(instance, rootContainer);
+    if (type === "cm-overlay") {
+      rootContainer.overlayInstances.add(instance);
+    }
     return instance;
   },
 
@@ -327,7 +308,7 @@ export const hostConfig: any = {
 
   // --------------- Children (mutation mode) ---------------
   appendInitialChild(parent: Instance, child: Instance) {
-    if (overlayInstances.has(child)) {
+    if (isOverlay(child)) {
       // Overlays are deferred to commitMount — skip normal child tracking.
       return;
     }
@@ -338,7 +319,7 @@ export const hostConfig: any = {
   },
 
   appendChild(parent: Instance, child: Instance) {
-    if (overlayInstances.has(child)) {
+    if (isOverlay(child)) {
       const root = instanceRootMap.get(child);
       if (root?.view.addOverlay) {
         root.view.addOverlay(child);
@@ -351,7 +332,7 @@ export const hostConfig: any = {
   },
 
   appendChildToContainer(container: RootContainer, child: Instance) {
-    if (overlayInstances.has(child)) {
+    if (isOverlay(child)) {
       if (container.view.addOverlay) {
         container.view.addOverlay(child);
       }
@@ -368,7 +349,7 @@ export const hostConfig: any = {
   },
 
   insertBefore(parent: Instance, child: Instance, beforeChild: Instance) {
-    if (overlayInstances.has(child)) {
+    if (isOverlay(child)) {
       const root = instanceRootMap.get(child);
       if (root?.view.addOverlay) {
         root.view.addOverlay(child);
@@ -390,7 +371,7 @@ export const hostConfig: any = {
     child: Instance,
     _beforeChild: Instance
   ) {
-    if (overlayInstances.has(child)) {
+    if (isOverlay(child)) {
       if (container.view.addOverlay) {
         container.view.addOverlay(child);
       }
@@ -405,12 +386,12 @@ export const hostConfig: any = {
   },
 
   removeChild(parent: Instance, child: Instance) {
-    if (overlayInstances.has(child)) {
+    if (isOverlay(child)) {
       const root = instanceRootMap.get(child);
       if (root?.view.removeOverlay) {
         root.view.removeOverlay(child);
       }
-      overlayInstances.delete(child);
+      unmarkOverlay(child);
       return;
     }
     const children = getTrackedChildren(parent);
@@ -423,11 +404,11 @@ export const hostConfig: any = {
   },
 
   removeChildFromContainer(container: RootContainer, child: Instance) {
-    if (overlayInstances.has(child)) {
+    if (isOverlay(child)) {
       if (container.view.removeOverlay) {
         container.view.removeOverlay(child);
       }
-      overlayInstances.delete(child);
+      unmarkOverlay(child);
       return;
     }
     child.unregisterWithView();
@@ -451,7 +432,7 @@ export const hostConfig: any = {
     newProps: Props,
   ): object | null {
     // Return a truthy payload if any prop (other than children) changed.
-    const skipKeys = new Set(["children", "key", "elementKey"]);
+    const skipKeys = new Set(["children", "key", "ref", "elementKey"]);
     const oKeys = Object.keys(oldProps).filter((k) => !skipKeys.has(k));
     const nKeys = Object.keys(newProps).filter((k) => !skipKeys.has(k));
     if (oKeys.length !== nKeys.length) return { changed: true };
@@ -468,7 +449,7 @@ export const hostConfig: any = {
     _oldProps: Props,
     newProps: Props,
   ) {
-    const base = buildPartialBaseConfig(newProps);
+    const base = extractBaseFields(newProps);
 
     // Delegate to the element-type-specific batch update method.
     switch (type) {
@@ -513,7 +494,9 @@ export const hostConfig: any = {
     }
 
     // Update or clear onClick handler
-    instance.setOnClick(newProps.onClick ?? null);
+    if (_oldProps.onClick !== newProps.onClick) {
+      instance.setOnClick(newProps.onClick ?? null);
+    }
 
     // Re-trigger entrance animation when animationKey changes
     if (
@@ -535,7 +518,7 @@ export const hostConfig: any = {
     // Called after finalizeInitialChildren returns true.
 
     // If this is an overlay, add it to the view's overlay layer now.
-    if (overlayInstances.has(instance)) {
+    if (isOverlay(instance)) {
       const root = instanceRootMap.get(instance);
       if (root?.view.addOverlay) {
         // First commit its own tracked children (it's a container)

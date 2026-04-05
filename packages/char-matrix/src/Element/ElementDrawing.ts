@@ -29,10 +29,8 @@ export abstract class ElementDrawing extends ElementLayout {
   public updateDrawingConfig(partial: Partial<ElementConfig>): void {
     if (partial.animationHandler !== undefined) {
       this.animationHandler = partial.animationHandler || null;
-      // Wire animation handler to element via duck-type check
-      const handler = this.animationHandler as any;
-      if (handler?.setElement) {
-        handler.setElement(this);
+      if (this.animationHandler?.setElement) {
+        this.animationHandler.setElement(this as unknown as import("./Element").Element);
       }
     }
   }
