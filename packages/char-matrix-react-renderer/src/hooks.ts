@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import type { RenderLoopController } from "@adam26davidson/char-matrix";
 import type { CMElementRef } from "./types";
@@ -60,19 +60,19 @@ export function usePolledData<T>(
   onError?: (error: unknown) => void
 ): void {
   // Stable refs for callbacks that may change between renders
+  const fetcherRef = useRef(fetcher);
+  fetcherRef.current = fetcher;
   const onDataRef = useRef(onData);
   const onErrorRef = useRef(onError);
   onDataRef.current = onData;
   onErrorRef.current = onError;
-
-  const stableFetcher = useCallback(fetcher, [fetcher]);
 
   useEffect(() => {
     let active = true;
 
     async function poll() {
       try {
-        const data = await stableFetcher();
+        const data = await fetcherRef.current();
         if (active) onDataRef.current(data);
       } catch (err) {
         if (active) onErrorRef.current?.(err);
@@ -86,5 +86,5 @@ export function usePolledData<T>(
       active = false;
       clearInterval(id);
     };
-  }, [stableFetcher, intervalMs]);
+  }, [intervalMs]);
 }

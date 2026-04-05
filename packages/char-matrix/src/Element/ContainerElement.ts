@@ -63,12 +63,12 @@ export class ContainerElement extends Element {
     const ma = this.mainAxis; // main axis
     const sa = this.secondaryAxis; // secondary axis
 
-    // Separate flow children from absolutely positioned ones
+    // Compute flow children once for all calculations
     const flowChildren = this.children.filter(
       (c) => c.getPositionMode() === "flow"
     );
 
-    const size = this.calculateSize();
+    const size = this.calculateSize(flowChildren);
 
     const totalBoundary = this.getTotalBoundarySize();
     const innerSizeM = size.get(ma) - totalBoundary.get(ma);
@@ -77,7 +77,7 @@ export class ContainerElement extends Element {
     const contentOffset = this.getContentOffset();
     const globalOffsetS = contentOffset.get(sa);
     let offsetM = contentOffset.get(ma);
-    const minContentSizeM = this.calculateMinContentSizeM();
+    const minContentSizeM = this.calculateMinContentSizeM(flowChildren);
 
     if (this.justifyContent !== "start" && minContentSizeM < innerSizeM) {
       if (this.justifyContent === "center") {
@@ -116,7 +116,7 @@ export class ContainerElement extends Element {
 
     this.flagForRedraw();
     this.setSize(size);
-    this.contentSize = this.calculateContentSize();
+    this.contentSize = this.calculateContentSize(flowChildren);
 
     this.updateScrollShowing();
   }
@@ -128,38 +128,34 @@ export class ContainerElement extends Element {
   protected handleUnregisterWithView(): void {}
   protected handleTransitionStart(): void {}
 
-  private calculateContentSize() {
+  private calculateContentSize(flowChildren: Element[]) {
     const size = new IntPoint();
-    size.set(this.mainAxis, this.calculateMinContentSizeM());
-    size.set(this.secondaryAxis, this.calculateMinContentSizeS());
+    size.set(this.mainAxis, this.calculateMinContentSizeM(flowChildren));
+    size.set(this.secondaryAxis, this.calculateMinContentSizeS(flowChildren));
     return size;
   }
 
-  private calculateSize() {
+  private calculateSize(flowChildren: Element[]) {
     const size = this.getSize().copy();
     const boundarySize = this.getTotalBoundarySize();
     if (this.sizingMethod[this.mainAxis] === "content") {
       size.set(
         this.mainAxis,
-        boundarySize.get(this.mainAxis) + this.calculateMinContentSizeM()
+        boundarySize.get(this.mainAxis) + this.calculateMinContentSizeM(flowChildren)
       );
     }
     if (this.sizingMethod[this.secondaryAxis] === "content") {
       size.set(
         this.secondaryAxis,
-        boundarySize.get(this.secondaryAxis) + this.calculateMinContentSizeS()
+        boundarySize.get(this.secondaryAxis) + this.calculateMinContentSizeS(flowChildren)
       );
     }
     return size;
   }
 
-  private getFlowChildren() {
-    return this.children.filter((c) => c.getPositionMode() === "flow");
-  }
-
-  private calculateMinContentSizeS() {
+  private calculateMinContentSizeS(flowChildren: Element[]) {
     let minSize = 0;
-    for (const e of this.getFlowChildren()) {
+    for (const e of flowChildren) {
       const eSize = e.getSize().get(this.secondaryAxis);
       if (eSize > minSize) {
         minSize = eSize;
@@ -168,13 +164,12 @@ export class ContainerElement extends Element {
     return minSize;
   }
 
-  private calculateMinContentSizeM() {
-    const flow = this.getFlowChildren();
+  private calculateMinContentSizeM(flowChildren: Element[]) {
     let minSize = 0;
-    for (const e of flow) {
+    for (const e of flowChildren) {
       minSize += e.getSize().get(this.mainAxis);
     }
-    minSize += Math.max(0, flow.length - 1) * this.spacing;
+    minSize += Math.max(0, flowChildren.length - 1) * this.spacing;
     return minSize;
   }
 }

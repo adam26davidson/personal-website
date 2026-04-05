@@ -9,6 +9,7 @@
  */
 export class RenderLoopController {
   private frameScheduled = false;
+  private destroyed = false;
   private continuousSources = new Set<object>();
   private onFrame: () => void;
 
@@ -17,10 +18,28 @@ export class RenderLoopController {
   }
 
   /**
+   * Stop the loop permanently and release all sources.
+   * After calling destroy(), no further frames will be scheduled.
+   */
+  public destroy(): void {
+    this.destroyed = true;
+    this.continuousSources.clear();
+    this.frameScheduled = false;
+  }
+
+  /**
+   * Whether this controller has been destroyed.
+   */
+  public isDestroyed(): boolean {
+    return this.destroyed;
+  }
+
+  /**
    * Register a source that needs continuous rendering (e.g., an active animation).
    * The loop will keep running until all sources are released.
    */
   public requestContinuousRendering(source: object): void {
+    if (this.destroyed) return;
     this.continuousSources.add(source);
     this.scheduleFrame();
   }
@@ -37,6 +56,7 @@ export class RenderLoopController {
    * continues automatically.
    */
   public scheduleFrame(): void {
+    if (this.destroyed) return;
     if (!this.frameScheduled) {
       this.frameScheduled = true;
       requestAnimationFrame(() => this.frame());
@@ -51,6 +71,7 @@ export class RenderLoopController {
   }
 
   private frame(): void {
+    if (this.destroyed) return;
     this.frameScheduled = false;
     this.onFrame();
 

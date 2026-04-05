@@ -21,6 +21,22 @@ import type {
 } from "@adam26davidson/char-matrix";
 
 // ---------------------------------------------------------------------------
+// Type guards for element instances
+// ---------------------------------------------------------------------------
+
+function isContainerElement(instance: Element): instance is ContainerElement {
+  return instance instanceof ContainerElement;
+}
+
+function isTextElement(instance: Element): instance is TextElement {
+  return instance instanceof TextElement;
+}
+
+function isTableElement(instance: Element): instance is TableElement {
+  return instance instanceof TableElement;
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -113,6 +129,37 @@ function buildBaseConfig(
   return {
     key: props.elementKey,
     view,
+    width: props.width,
+    widthType: props.widthType,
+    height: props.height,
+    heightType: props.heightType,
+    scrollable: props.scrollable,
+    paddingTop: props.paddingTop,
+    paddingBottom: props.paddingBottom,
+    paddingLeft: props.paddingLeft,
+    paddingRight: props.paddingRight,
+    paddingX: props.paddingX,
+    paddingY: props.paddingY,
+    padding: props.padding,
+    bordered: props.bordered,
+    backgroundChar: props.backgroundChar,
+    cursor: props.cursor,
+    xOffset: props.xOffset,
+    yOffset: props.yOffset,
+    animationHandler: props.animationHandler,
+    entranceTiming: props.entranceTiming,
+    exitTiming: props.exitTiming,
+    zIndex: props.zIndex,
+    position: props.position,
+  };
+}
+
+/**
+ * Build a partial config object from base props for use in commitUpdate.
+ * Unlike buildBaseConfig, this does not require a view reference.
+ */
+function buildPartialBaseConfig(props: CMBaseProps): Partial<ElementConfig> {
+  return {
     width: props.width,
     widthType: props.widthType,
     height: props.height,
@@ -376,6 +423,13 @@ export const hostConfig: any = {
   },
 
   removeChildFromContainer(container: RootContainer, child: Instance) {
+    if (overlayInstances.has(child)) {
+      if (container.view.removeOverlay) {
+        container.view.removeOverlay(child);
+      }
+      overlayInstances.delete(child);
+      return;
+    }
     child.unregisterWithView();
     if (container.rootElement === child) {
       container.rootElement = null;
@@ -414,149 +468,60 @@ export const hostConfig: any = {
     _oldProps: Props,
     newProps: Props,
   ) {
-    // Build a partial config from the new props and delegate to the
-    // element-type-specific batch update method.
+    const base = buildPartialBaseConfig(newProps);
+
+    // Delegate to the element-type-specific batch update method.
     switch (type) {
-      case "cm-container": {
+      case "cm-container":
+      case "cm-overlay": {
         const p = newProps as CMContainerProps;
-        (instance as any).updateContainerConfig({
-          width: p.width,
-          widthType: p.widthType,
-          height: p.height,
-          heightType: p.heightType,
-          scrollable: p.scrollable,
-          paddingTop: p.paddingTop,
-          paddingBottom: p.paddingBottom,
-          paddingLeft: p.paddingLeft,
-          paddingRight: p.paddingRight,
-          paddingX: p.paddingX,
-          paddingY: p.paddingY,
-          padding: p.padding,
-          bordered: p.bordered,
-          backgroundChar: p.backgroundChar,
-          cursor: p.cursor,
-          xOffset: p.xOffset,
-          yOffset: p.yOffset,
-          animationHandler: p.animationHandler,
-          entranceTiming: p.entranceTiming,
-          exitTiming: p.exitTiming,
-          zIndex: p.zIndex,
-          position: p.position,
-          mainAxis: p.mainAxis,
-          justifyContent: p.justifyContent,
-          alignItems: p.alignItems,
-          spacing: p.spacing,
-        });
+        if (isContainerElement(instance)) {
+          instance.updateContainerConfig({
+            ...base,
+            mainAxis: p.mainAxis,
+            justifyContent: p.justifyContent,
+            alignItems: p.alignItems,
+            spacing: p.spacing,
+          });
+        }
         break;
       }
       case "cm-text": {
         const p = newProps as CMTextProps;
-        (instance as any).updateTextConfig({
-          width: p.width,
-          widthType: p.widthType,
-          height: p.height,
-          heightType: p.heightType,
-          scrollable: p.scrollable,
-          paddingTop: p.paddingTop,
-          paddingBottom: p.paddingBottom,
-          paddingLeft: p.paddingLeft,
-          paddingRight: p.paddingRight,
-          paddingX: p.paddingX,
-          paddingY: p.paddingY,
-          padding: p.padding,
-          bordered: p.bordered,
-          backgroundChar: p.backgroundChar,
-          cursor: p.cursor,
-          xOffset: p.xOffset,
-          yOffset: p.yOffset,
-          animationHandler: p.animationHandler,
-          entranceTiming: p.entranceTiming,
-          exitTiming: p.exitTiming,
-          zIndex: p.zIndex,
-          position: p.position,
-          text: p.text,
-          hoverTransform: p.hoverTransform,
-        });
+        if (isTextElement(instance)) {
+          instance.updateTextConfig({
+            ...base,
+            text: p.text,
+            hoverTransform: p.hoverTransform,
+          });
+        }
         break;
       }
       case "cm-table": {
         const p = newProps as CMTableProps;
-        (instance as any).updateTableConfig({
-          width: p.width,
-          widthType: p.widthType,
-          height: p.height,
-          heightType: p.heightType,
-          scrollable: p.scrollable,
-          paddingTop: p.paddingTop,
-          paddingBottom: p.paddingBottom,
-          paddingLeft: p.paddingLeft,
-          paddingRight: p.paddingRight,
-          paddingX: p.paddingX,
-          paddingY: p.paddingY,
-          padding: p.padding,
-          bordered: p.bordered,
-          backgroundChar: p.backgroundChar,
-          cursor: p.cursor,
-          xOffset: p.xOffset,
-          yOffset: p.yOffset,
-          animationHandler: p.animationHandler,
-          entranceTiming: p.entranceTiming,
-          exitTiming: p.exitTiming,
-          zIndex: p.zIndex,
-          position: p.position,
-          columns: p.columns,
-          title: p.title,
-          titleAlign: p.titleAlign,
-          showRowSeparators: p.showRowSeparators,
-        });
-        break;
-      }
-      case "cm-overlay": {
-        const p = newProps as CMOverlayProps;
-        (instance as any).updateContainerConfig({
-          width: p.width,
-          widthType: p.widthType,
-          height: p.height,
-          heightType: p.heightType,
-          scrollable: p.scrollable,
-          paddingTop: p.paddingTop,
-          paddingBottom: p.paddingBottom,
-          paddingLeft: p.paddingLeft,
-          paddingRight: p.paddingRight,
-          paddingX: p.paddingX,
-          paddingY: p.paddingY,
-          padding: p.padding,
-          bordered: p.bordered,
-          backgroundChar: p.backgroundChar,
-          cursor: p.cursor,
-          xOffset: p.xOffset,
-          yOffset: p.yOffset,
-          animationHandler: p.animationHandler,
-          entranceTiming: p.entranceTiming,
-          exitTiming: p.exitTiming,
-          zIndex: p.zIndex,
-          position: p.position,
-          mainAxis: p.mainAxis,
-          justifyContent: p.justifyContent,
-          alignItems: p.alignItems,
-          spacing: p.spacing,
-        });
+        if (isTableElement(instance)) {
+          instance.updateTableConfig({
+            ...base,
+            columns: p.columns,
+            title: p.title,
+            titleAlign: p.titleAlign,
+            showRowSeparators: p.showRowSeparators,
+          });
+        }
         break;
       }
     }
 
-    // Update onClick handler
-    if (newProps.onClick) {
-      instance.setOnClick(newProps.onClick);
-    }
+    // Update or clear onClick handler
+    instance.setOnClick(newProps.onClick ?? null);
 
     // Re-trigger entrance animation when animationKey changes
     if (
       _oldProps.animationKey !== newProps.animationKey &&
       newProps.animationKey != null
     ) {
-      if ((instance as any).getStage() === "main") {
-        (instance as any).startTransition("enter");
+      if (instance.getStage() === "main") {
+        instance.startTransition("enter");
       }
     }
   },

@@ -18,7 +18,7 @@ export abstract class ElementInteraction extends ElementDrawing {
     this.cursor = config.cursor || "default";
   }
 
-  public setOnClick(onClick: () => void): void {
+  public setOnClick(onClick: (() => void) | null): void {
     this.onclick = onClick;
   }
 

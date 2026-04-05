@@ -179,8 +179,9 @@ export abstract class ElementBase extends ParentElement {
     const heightChanged = partial.height !== undefined;
 
     if (widthTypeChanged || widthChanged) {
-      this.sizingMethod.x =
-        partial.widthType || (partial.width !== undefined ? "absolute" : this.sizingMethod.x);
+      this.sizingMethod.x = widthTypeChanged
+        ? partial.widthType!
+        : (partial.width !== undefined ? "absolute" : this.sizingMethod.x);
       if (this.sizingMethod.x === "absolute" && partial.width !== undefined) {
         this.size.set(X, partial.width);
       }
@@ -190,8 +191,9 @@ export abstract class ElementBase extends ParentElement {
     }
 
     if (heightTypeChanged || heightChanged) {
-      this.sizingMethod.y =
-        partial.heightType || (partial.height !== undefined ? "absolute" : this.sizingMethod.y);
+      this.sizingMethod.y = heightTypeChanged
+        ? partial.heightType!
+        : (partial.height !== undefined ? "absolute" : this.sizingMethod.y);
       if (this.sizingMethod.y === "absolute" && partial.height !== undefined) {
         this.size.set(Y, partial.height);
       }

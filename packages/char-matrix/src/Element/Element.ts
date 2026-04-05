@@ -85,7 +85,7 @@ export abstract class Element extends ElementInteraction {
     });
     this.resizeChildren();
     this.reprocessContent();
-    if (this.stage === "queued") {
+    if (this.stage !== "exiting" && this.stage !== "exited") {
       this.entranceSequence = new TransitionSequence(
         this.children,
         this.entranceSequenceTiming,
@@ -195,6 +195,17 @@ export abstract class Element extends ElementInteraction {
     if (!animationStarted) {
       // No animation handler or no config for this type — instant transition
       onTransition();
+    }
+
+    // For enter transitions, reset children in the entrance sequence to
+    // "queued" so they're hidden until the sequence starts their individual
+    // entrance animation. This ensures reused elements (e.g. from React
+    // reconciliation) properly replay their entrance animation instead of
+    // remaining visible from a previous render.
+    if (type === "enter") {
+      for (const child of sequence.extractAll()) {
+        child.stage = "queued";
+      }
     }
 
     sequence.setonComplete(onTransition);
