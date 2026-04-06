@@ -73,7 +73,7 @@ export function CMLink({
   const isMobile = view.getIsMobile();
   const handler = useMemo(
     () => createLinkAnimationHandler(view, animate),
-    [view, animate]
+    [view, animate, isMobile]
   );
 
   return (
@@ -103,9 +103,10 @@ export function CMButtonLink({
   animate?: boolean;
 }) {
   const { view } = useMatrixView();
+  const isMobile = view.getIsMobile();
   const handler = useMemo(
     () => createLinkAnimationHandler(view, animate),
-    [view, animate]
+    [view, animate, isMobile]
   );
 
   return (

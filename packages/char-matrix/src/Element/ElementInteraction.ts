@@ -56,11 +56,11 @@ export abstract class ElementInteraction extends ElementDrawing {
             determiningMouse = true;
           }
         });
-        if (!pointIsInside && this.stage !== "entering") {
+        if (!pointIsInside) {
           this.animationHandler?.startAnimation("mouseExit", () => {});
           this.mouseIsInside = false;
           this.handleMouseLeave();
-        } else if (!this.mouseIsInside && this.stage !== "entering") {
+        } else if (!this.mouseIsInside) {
           this.animationHandler?.startAnimation("mouseEnter", () => {});
           this.mouseIsInside = true;
           this.handleMouseEnter();
