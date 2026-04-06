@@ -158,32 +158,24 @@ function unmarkOverlay(instance: Element): void {
 // Element creation helpers
 // ---------------------------------------------------------------------------
 
-/** Extract the shared base config fields from props (everything except key/view). */
+/** Extract the shared base config fields from props (everything except key/view).
+ *  Only includes fields that are explicitly set — avoids spreading undefined values
+ *  which would defeat `"key" in obj` checks downstream. */
 function extractBaseFields(props: CMBaseProps): Partial<ElementConfig> {
-  return {
-    width: props.width,
-    widthType: props.widthType,
-    height: props.height,
-    heightType: props.heightType,
-    scrollable: props.scrollable,
-    paddingTop: props.paddingTop,
-    paddingBottom: props.paddingBottom,
-    paddingLeft: props.paddingLeft,
-    paddingRight: props.paddingRight,
-    paddingX: props.paddingX,
-    paddingY: props.paddingY,
-    padding: props.padding,
-    bordered: props.bordered,
-    backgroundChar: props.backgroundChar,
-    cursor: props.cursor,
-    xOffset: props.xOffset,
-    yOffset: props.yOffset,
-    animationHandler: props.animationHandler,
-    entranceTiming: props.entranceTiming,
-    exitTiming: props.exitTiming,
-    zIndex: props.zIndex,
-    position: props.position,
-  };
+  const result: Partial<ElementConfig> = {};
+  const fields = [
+    "width", "widthType", "height", "heightType", "scrollable",
+    "paddingTop", "paddingBottom", "paddingLeft", "paddingRight",
+    "paddingX", "paddingY", "padding", "bordered", "backgroundChar",
+    "cursor", "xOffset", "yOffset", "animationHandler",
+    "entranceTiming", "exitTiming", "zIndex", "position",
+  ] as const;
+  for (const field of fields) {
+    if (props[field] !== undefined) {
+      (result as any)[field] = props[field];
+    }
+  }
+  return result;
 }
 
 function buildBaseConfig(
@@ -306,6 +298,8 @@ function untrackParent(child: Element): void {
 type ChildCommitStrategy = (parent: Element) => void;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ElementConstructor = new (...args: any[]) => Element;
+// Keyed by exact constructor identity — subclasses do NOT inherit their
+// parent's strategy. Register each concrete class that needs custom handling.
 const commitStrategyRegistry = new Map<ElementConstructor, ChildCommitStrategy>();
 
 export function registerChildCommitStrategy(
@@ -451,13 +445,7 @@ export const hostConfig: any = {
       return;
     }
     container.rootElement = child;
-    // Use setRoot if available (MatrixView implements this) for full integration
-    // with the render loop. Falls back to registerWithView for basic targets.
-    if ((container.view as any).setRoot) {
-      (container.view as any).setRoot(child);
-    } else {
-      child.registerWithView();
-    }
+    container.view.setRoot(child);
   },
 
   insertBefore(parent: Instance, child: Instance, beforeChild: Instance) {
@@ -491,11 +479,7 @@ export const hostConfig: any = {
       return;
     }
     container.rootElement = child;
-    if ((container.view as any).setRoot) {
-      (container.view as any).setRoot(child);
-    } else {
-      child.registerWithView();
-    }
+    container.view.setRoot(child);
   },
 
   removeChild(parent: Instance, child: Instance) {

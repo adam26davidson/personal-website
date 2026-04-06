@@ -23,6 +23,8 @@ export class TableCellElement extends StructuralElement {
     return this._text;
   }
 
+  /** Sets cell text. Does not trigger a table re-commit on its own —
+   *  the reconciler's commitUpdate calls bubbleCommitToAncestor after this. */
   set text(value: string | undefined) {
     this._text = value;
   }
