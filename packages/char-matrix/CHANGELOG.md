@@ -1,5 +1,11 @@
 # @adam26davidson/char-matrix
 
+## 0.0.12
+
+### Patch Changes
+
+- 5aea9e8: Add structural element types (StructuralElement, TableRowElement, TableCellElement) and JSX support for declarative table rows/cells via cm-table-row and cm-table-cell intrinsic elements
+
 ## 0.0.11
 
 ### Patch Changes
