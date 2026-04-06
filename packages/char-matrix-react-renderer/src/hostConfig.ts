@@ -3,6 +3,9 @@ import {
   ContainerElement,
   TextElement,
   TableElement,
+  StructuralElement,
+  TableRowElement,
+  TableCellElement,
 } from "@adam26davidson/char-matrix";
 import type {
   RenderTarget,
@@ -11,6 +14,9 @@ import type {
   ContainerElementConfig,
   TextElementConfig,
   TableElementConfig,
+  TableRowConfig,
+  TableCellConfig,
+  TableCellElementConfig,
   Alignment,
   Axis,
   SizingMethod,
@@ -36,11 +42,15 @@ function isTableElement(instance: Element): instance is TableElement {
   return instance instanceof TableElement;
 }
 
+function isStructuralElement(instance: Element): instance is StructuralElement {
+  return instance instanceof StructuralElement;
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type CMElementType = "cm-container" | "cm-text" | "cm-table" | "cm-overlay";
+export type CMElementType = "cm-container" | "cm-text" | "cm-table" | "cm-overlay" | "cm-table-row" | "cm-table-cell";
 
 /** Props common to all char-matrix elements (mirrors ElementConfig minus view). */
 interface CMBaseProps {
@@ -100,7 +110,24 @@ export interface CMTableProps extends CMBaseProps {
 /** Overlay props — same as container, rendered into the overlay layer instead of the element tree. */
 export interface CMOverlayProps extends CMContainerProps {}
 
-export type CMProps = CMContainerProps | CMTextProps | CMTableProps | CMOverlayProps;
+/** Props for a structural table row element. */
+export interface CMTableRowProps {
+  key?: string | number;
+  ref?: React.Ref<any>;
+  elementKey: string;
+  children?: React.ReactNode;
+}
+
+/** Props for a structural table cell element. */
+export interface CMTableCellProps {
+  key?: string | number;
+  ref?: React.Ref<any>;
+  elementKey: string;
+  text?: string;
+  children?: React.ReactNode;
+}
+
+export type CMProps = CMContainerProps | CMTextProps | CMTableProps | CMOverlayProps | CMTableRowProps | CMTableCellProps;
 
 /** The root container object passed to the reconciler. */
 export interface RootContainer {
@@ -217,19 +244,31 @@ function createElement(
       } as ContainerElementConfig);
       break;
     }
+    case "cm-table-row": {
+      return new TableRowElement({ key: props.elementKey, view });
+    }
+    case "cm-table-cell": {
+      const p = props as CMTableCellProps;
+      return new TableCellElement({
+        key: p.elementKey,
+        view,
+        text: p.text,
+      } as TableCellElementConfig);
+    }
     default:
       throw new Error(`Unknown char-matrix element type: ${type}`);
   }
 
-  // Wire onClick handler
-  if (props.onClick) {
-    instance.setOnClick(props.onClick);
+  // Wire onClick handler (structural types returned early above)
+  const baseProps = props as CMBaseProps;
+  if (baseProps.onClick) {
+    instance.setOnClick(baseProps.onClick);
   }
 
   // Wire animation handler — DefaultAnimationHandler needs setElement() called
   // after the element is constructed.
-  if (props.animationHandler?.setElement) {
-    props.animationHandler.setElement(instance);
+  if (baseProps.animationHandler?.setElement) {
+    baseProps.animationHandler.setElement(instance);
   }
 
   return instance;
@@ -241,6 +280,7 @@ function createElement(
 // ---------------------------------------------------------------------------
 
 const childrenMap = new WeakMap<Element, Element[]>();
+const parentMap = new WeakMap<Element, Element>();
 
 function getTrackedChildren(parent: Element): Element[] {
   let children = childrenMap.get(parent);
@@ -251,10 +291,80 @@ function getTrackedChildren(parent: Element): Element[] {
   return children;
 }
 
-function commitChildren(parent: Element) {
-  const children = getTrackedChildren(parent);
-  parent.setChildren([...children]);
+function trackParent(child: Element, parent: Element): void {
+  parentMap.set(child, parent);
 }
+
+function untrackParent(child: Element): void {
+  parentMap.delete(child);
+}
+
+// ---------------------------------------------------------------------------
+// Child-commit strategy registry
+// ---------------------------------------------------------------------------
+
+type ChildCommitStrategy = (parent: Element) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ElementConstructor = new (...args: any[]) => Element;
+const commitStrategyRegistry = new Map<ElementConstructor, ChildCommitStrategy>();
+
+export function registerChildCommitStrategy(
+  ctor: ElementConstructor,
+  strategy: ChildCommitStrategy
+): void {
+  commitStrategyRegistry.set(ctor, strategy);
+}
+
+function bubbleCommitToAncestor(structural: Element): void {
+  let current: Element | undefined = parentMap.get(structural);
+  while (current && isStructuralElement(current)) {
+    current = parentMap.get(current);
+  }
+  if (current) {
+    commitChildren(current);
+  }
+}
+
+function commitChildren(parent: Element) {
+  const strategy = commitStrategyRegistry.get(parent.constructor as ElementConstructor);
+  if (strategy) {
+    strategy(parent);
+  } else if (isStructuralElement(parent)) {
+    bubbleCommitToAncestor(parent);
+  } else {
+    parent.setChildren([...getTrackedChildren(parent)]);
+  }
+}
+
+// Table child-commit strategy: assemble TableRowConfig[] from structural children
+registerChildCommitStrategy(TableElement, (parent: Element) => {
+  const table = parent as TableElement;
+  const rowElements = getTrackedChildren(parent);
+  const rows: TableRowConfig[] = [];
+
+  for (const rowEl of rowElements) {
+    if (!(rowEl instanceof TableRowElement)) continue;
+    const cellElements = getTrackedChildren(rowEl);
+    const cells: (TableCellConfig | Element)[] = [];
+
+    for (const cellEl of cellElements) {
+      if (cellEl instanceof TableCellElement) {
+        const cellChildren = getTrackedChildren(cellEl);
+        if (cellChildren.length > 0) {
+          cells.push({ element: cellChildren[0] });
+        } else if (cellEl.text !== undefined) {
+          cells.push({ text: cellEl.text });
+        } else {
+          cells.push({ text: "" });
+        }
+      }
+    }
+
+    rows.push({ cells });
+  }
+
+  table.setRows(rows);
+});
 
 // ---------------------------------------------------------------------------
 // HostConfig
@@ -314,6 +424,7 @@ export const hostConfig: any = {
     }
     const children = getTrackedChildren(parent);
     children.push(child);
+    trackParent(child, parent);
     // Don't commit yet — React calls this during the "complete" phase.
     // finalizeInitialChildren or the commit phase will handle it.
   },
@@ -328,6 +439,7 @@ export const hostConfig: any = {
     }
     const children = getTrackedChildren(parent);
     children.push(child);
+    trackParent(child, parent);
     commitChildren(parent);
   },
 
@@ -363,6 +475,7 @@ export const hostConfig: any = {
     } else {
       children.push(child);
     }
+    trackParent(child, parent);
     commitChildren(parent);
   },
 
@@ -399,6 +512,7 @@ export const hostConfig: any = {
     if (idx >= 0) {
       children.splice(idx, 1);
     }
+    untrackParent(child);
     child.unregisterWithView();
     commitChildren(parent);
   },
@@ -449,6 +563,19 @@ export const hostConfig: any = {
     _oldProps: Props,
     newProps: Props,
   ) {
+    // Structural elements have minimal props — handle them separately.
+    if (type === "cm-table-cell") {
+      const p = newProps as CMTableCellProps;
+      if (instance instanceof TableCellElement) {
+        instance.text = p.text;
+      }
+      bubbleCommitToAncestor(instance);
+      return;
+    }
+    if (type === "cm-table-row") {
+      return;
+    }
+
     const base = extractBaseFields(newProps);
 
     // Delegate to the element-type-specific batch update method.
@@ -493,15 +620,20 @@ export const hostConfig: any = {
       }
     }
 
+    // The remaining code only applies to non-structural element types
+    // (which all extend CMBaseProps). Structural types returned early above.
+    const oldBase = _oldProps as CMBaseProps;
+    const newBase = newProps as CMBaseProps;
+
     // Update or clear onClick handler
-    if (_oldProps.onClick !== newProps.onClick) {
-      instance.setOnClick(newProps.onClick ?? null);
+    if (oldBase.onClick !== newBase.onClick) {
+      instance.setOnClick(newBase.onClick ?? null);
     }
 
     // Re-trigger entrance animation when animationKey changes
     if (
-      _oldProps.animationKey !== newProps.animationKey &&
-      newProps.animationKey != null
+      oldBase.animationKey !== newBase.animationKey &&
+      newBase.animationKey != null
     ) {
       if (instance.getStage() === "main") {
         instance.startTransition("enter");
@@ -516,6 +648,10 @@ export const hostConfig: any = {
 
   commitMount(instance: Instance) {
     // Called after finalizeInitialChildren returns true.
+
+    // Structural elements (table rows/cells) are handled by their
+    // parent's child-commit strategy — skip normal child commitment.
+    if (isStructuralElement(instance)) return;
 
     // If this is an overlay, add it to the view's overlay layer now.
     if (isOverlay(instance)) {
@@ -534,7 +670,7 @@ export const hostConfig: any = {
     // Commit the tracked children now that the initial tree is assembled.
     const children = getTrackedChildren(instance);
     if (children.length > 0) {
-      instance.setChildren([...children]);
+      commitChildren(instance);
     }
   },
 
@@ -543,7 +679,9 @@ export const hostConfig: any = {
     return null;
   },
 
-  resetAfterCommit() {},
+  resetAfterCommit(container: RootContainer) {
+    container.view.getRenderLoop?.()?.scheduleFrame();
+  },
 
   shouldSetTextContent(): boolean {
     return false;

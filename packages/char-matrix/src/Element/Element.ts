@@ -146,12 +146,14 @@ export abstract class Element extends ElementInteraction {
   // --- view registration ---
 
   public registerWithView() {
+    if (this.isOnView) return;
     this.view.registerElement(this);
     this.isOnView = true;
     this.children.forEach((child) => child.registerWithView());
   }
 
   public unregisterWithView() {
+    if (!this.isOnView) return;
     this.handleUnregisterWithView();
     this.view.unregisterElement(this);
     this.isOnView = false;
