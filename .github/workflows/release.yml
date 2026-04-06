@@ -47,5 +47,5 @@ jobs:
           git config user.name "personal-site-ci[bot]"
           git config user.email "personal-site-ci[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "chore: version packages" || echo "No changes to commit"
+          git commit -m "chore: version packages [skip ci]" || echo "No changes to commit"
           git push
