@@ -1,5 +1,11 @@
 # @adam26davidson/char-matrix
 
+## 0.0.11
+
+### Patch Changes
+
+- 3dbbaf2: Fix hover state getting stuck after mobile-to-desktop resize by removing entering-stage guard on mouse event handling in ElementInteraction
+
 ## 0.0.10
 
 ### Patch Changes
