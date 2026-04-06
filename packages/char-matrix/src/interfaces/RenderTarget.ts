@@ -46,4 +46,5 @@ export interface RenderTarget {
 
   // --- Render loop (optional) ---
   getRenderLoop?(): RenderLoopController;
+  setRenderLoop?(controller: RenderLoopController): void;
 }

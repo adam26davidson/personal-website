@@ -35,8 +35,8 @@ function createLinkAnimationConfig(
     type: "diagonalSwipe",
     config: {
       slant: 2,
-      tailLength: isMobile ? 10 : 30,
-      headSpeed: isMobile ? 1 : 2,
+      tailLength: 30,
+      headSpeed: 2,
       randomizationRange: 5,
       use,
     },
@@ -63,57 +63,29 @@ export function CMLink({
   text,
   onClick,
   animate = true,
+  variant = "link",
 }: {
   elementKey: string;
   text: string;
   onClick?: () => void;
   animate?: boolean;
+  variant?: "link" | "button";
 }) {
   const { view } = useMatrixView();
   const isMobile = view.getIsMobile();
   const handler = useMemo(
     () => createLinkAnimationHandler(view, animate),
-    [view, animate]
+    [view, animate, isMobile]
   );
+
+  const alwaysBordered = variant === "button";
 
   return (
     <cm-text
       elementKey={elementKey}
       text={text}
-      bordered={isMobile}
-      paddingX={isMobile ? 1 : 0}
-      backgroundChar={SPACE_CHAR}
-      hoverTransform="bold"
-      cursor="pointer"
-      animationHandler={handler}
-      onClick={onClick}
-    />
-  );
-}
-
-export function CMButtonLink({
-  elementKey,
-  text,
-  onClick,
-  animate = true,
-}: {
-  elementKey: string;
-  text: string;
-  onClick?: () => void;
-  animate?: boolean;
-}) {
-  const { view } = useMatrixView();
-  const handler = useMemo(
-    () => createLinkAnimationHandler(view, animate),
-    [view, animate]
-  );
-
-  return (
-    <cm-text
-      elementKey={elementKey}
-      text={text}
-      bordered
-      paddingX={1}
+      bordered={alwaysBordered || isMobile}
+      paddingX={alwaysBordered || isMobile ? 1 : 0}
       backgroundChar={SPACE_CHAR}
       hoverTransform="bold"
       cursor="pointer"

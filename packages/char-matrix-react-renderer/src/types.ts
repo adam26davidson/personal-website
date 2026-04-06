@@ -1,4 +1,4 @@
-import type { CMContainerProps, CMTextProps, CMTableProps, CMOverlayProps } from "./hostConfig";
+import type { CMContainerProps, CMTextProps, CMTableProps, CMOverlayProps, CMTableRowProps, CMTableCellProps } from "./hostConfig";
 import type {
   ElementStage,
   ElementAnimationHandler,
@@ -24,6 +24,8 @@ declare global {
       "cm-container": CMContainerProps;
       "cm-text": CMTextProps;
       "cm-table": CMTableProps;
+      "cm-table-row": CMTableRowProps;
+      "cm-table-cell": CMTableCellProps;
       "cm-overlay": CMOverlayProps;
     }
   }
