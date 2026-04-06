@@ -4,8 +4,11 @@ export type {
   CMTextProps,
   CMTableProps,
   CMOverlayProps,
+  CMTableRowProps,
+  CMTableCellProps,
   CMElementType,
 } from "./hostConfig";
+export { registerChildCommitStrategy } from "./hostConfig";
 export type { CMElementRef } from "./types";
 export {
   RenderLoopContext,

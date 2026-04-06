@@ -9,6 +9,10 @@ export type { TextElementConfig, HoverTextTransform } from "./Element/TextElemen
 export { TableElement } from "./Element/TableElement";
 export type { TableElementConfig, ColumnDef, TableRowConfig, TableCellConfig } from "./Element/TableElement";
 export { TransitionSequence } from "./Element/TransitionSequence";
+export { StructuralElement } from "./Element/StructuralElement";
+export { TableRowElement } from "./Element/TableRowElement";
+export { TableCellElement } from "./Element/TableCellElement";
+export type { TableCellElementConfig } from "./Element/TableCellElement";
 
 // Interfaces
 export type { RenderTarget } from "./interfaces/RenderTarget";
