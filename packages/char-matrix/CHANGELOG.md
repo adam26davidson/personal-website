@@ -1,5 +1,11 @@
 # @adam26davidson/char-matrix
 
+## 0.1.0
+
+### Minor Changes
+
+- 23b7086: Add codepoint-based glyph lookup exports for Spleen fonts (getSpleen5x8Glyph, getSpleen6x12Glyph)
+
 ## 0.0.12
 
 ### Patch Changes

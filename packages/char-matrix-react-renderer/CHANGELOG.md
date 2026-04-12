@@ -1,5 +1,12 @@
 # @adam26davidson/char-matrix-react-renderer
 
+## 1.0.0
+
+### Patch Changes
+
+- Updated dependencies [23b7086]
+  - @adam26davidson/char-matrix@0.1.0
+
 ## 0.0.4
 
 ### Patch Changes
