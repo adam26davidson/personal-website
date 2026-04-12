@@ -61,7 +61,7 @@ export { getUnifontGlyph } from "./utils/UnifontRegistry";
 export type { UnifontGlyph } from "./utils/UnifontRegistry";
 
 // Compact big text (Spleen 5×8 → 3×2 octants)
-export { toCompactBigChar, toCompactBigText, parseSpleenGlyph } from "./utils/BigTextCompact";
+export { toCompactBigChar, toCompactBigText, parseSpleenGlyph, getSpleen5x8Glyph } from "./utils/BigTextCompact";
 
 // Medium big text (Spleen 6×12 → 3×3 octants)
-export { toMediumBigChar, toMediumBigText, parseSpleen6x12Glyph } from "./utils/BigTextMedium";
+export { toMediumBigChar, toMediumBigText, parseSpleen6x12Glyph, getSpleen6x12Glyph } from "./utils/BigTextMedium";
