@@ -150,6 +150,17 @@ function getGlyph(char: string): boolean[][] | null {
 }
 
 /**
+ * Look up a Spleen 5×8 glyph by codepoint.
+ * Returns the parsed pixel grid and dimensions, or null if not found.
+ */
+export function getSpleen5x8Glyph(codepoint: number): { grid: boolean[][]; width: number; height: number } | null {
+  const mapped = toAsciiCodepoint(codepoint);
+  const hexRows = SPLEEN_5X8[mapped];
+  if (!hexRows) return null;
+  return { grid: parseSpleenGlyph(hexRows), width: GLYPH_WIDTH, height: GLYPH_HEIGHT };
+}
+
+/**
  * Render a string as compact big text by compositing all character
  * bitmaps into a single pixel buffer, then converting to octants.
  *
