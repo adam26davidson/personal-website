@@ -84,6 +84,10 @@ export class TableElement extends Element {
       }
     }
 
+    // Rebuild entrance/exit sequences so new element children participate
+    // in the parent's entrance animation (same as Element.setChildren does).
+    this.rebuildTransitionSequences();
+
     this.reprocessContent();
     this.flagForRedraw();
   }

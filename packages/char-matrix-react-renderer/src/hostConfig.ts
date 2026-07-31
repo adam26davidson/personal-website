@@ -105,6 +105,7 @@ export interface CMTableProps extends CMBaseProps {
   title?: string;
   titleAlign?: "start" | "center" | "end";
   showRowSeparators?: boolean;
+  children?: React.ReactNode;
 }
 
 /** Overlay props — same as container, rendered into the overlay layer instead of the element tree. */
@@ -647,6 +648,9 @@ export const hostConfig: any = {
           instance.setChildren([...children]);
         }
         root.view.addOverlay(instance);
+        // Transition to visible — overlays bypass the normal entrance
+        // sequence since they're not part of the element tree.
+        instance.startTransition("enter");
       }
       return;
     }
@@ -655,6 +659,21 @@ export const hostConfig: any = {
     const children = getTrackedChildren(instance);
     if (children.length > 0) {
       commitChildren(instance);
+    }
+
+    // If this element was added to a parent that has already completed its
+    // entrance (e.g., data arrived after initial mount), immediately start
+    // the element's entrance so it transitions from "queued" to visible.
+    // During the initial mount this is a no-op because parents are still
+    // "queued" themselves — the root entrance handles that case.
+    // Walk past structural parents (table rows/cells) which are never
+    // transitioned themselves.
+    let cmParent: Element | undefined = parentMap.get(instance);
+    while (cmParent && isStructuralElement(cmParent)) {
+      cmParent = parentMap.get(cmParent);
+    }
+    if (cmParent && cmParent.getStage() === "main") {
+      instance.startTransition("enter");
     }
   },
 
