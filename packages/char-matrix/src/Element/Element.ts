@@ -98,6 +98,14 @@ export abstract class Element extends ElementInteraction {
     });
     this.resizeChildren();
     this.reprocessContent();
+    this.rebuildTransitionSequences();
+  }
+
+  /**
+   * Rebuild entrance/exit transition sequences from the current children.
+   * Called after children change so the sequences reflect the latest child list.
+   */
+  protected rebuildTransitionSequences() {
     if (this.stage !== "exiting" && this.stage !== "exited") {
       this.entranceSequence = new TransitionSequence(
         this.children,
