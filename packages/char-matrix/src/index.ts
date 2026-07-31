@@ -65,3 +65,6 @@ export { toCompactBigChar, toCompactBigText, parseSpleenGlyph, getSpleen5x8Glyph
 
 // Medium big text (Spleen 6×12 → 3×3 octants)
 export { toMediumBigChar, toMediumBigText, parseSpleen6x12Glyph, getSpleen6x12Glyph } from "./utils/BigTextMedium";
+
+// Large big text (Spleen 16×32)
+export { parseSpleen16x32Glyph, getSpleen16x32Glyph } from "./utils/BigTextLarge";
