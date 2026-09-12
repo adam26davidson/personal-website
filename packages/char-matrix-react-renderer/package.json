@@ -23,7 +23,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "react-reconciler": "^0.29.0"
+    "react-reconciler": "^0.34.0"
   },
   "peerDependencies": {
     "@adam26davidson/char-matrix": "*",
