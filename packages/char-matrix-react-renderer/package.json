@@ -23,7 +23,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "react-reconciler": "^0.29.0"
+    "react-reconciler": "^0.34.0"
   },
   "peerDependencies": {
     "@adam26davidson/char-matrix": "*",
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
-    "@types/react-reconciler": "^0.33.0",
+    "@types/react-reconciler": "^0.34.0",
     "typescript": "^5.2.2",
     "vitest": "^3.0.2"
   }
